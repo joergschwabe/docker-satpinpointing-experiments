@@ -8,13 +8,13 @@
 	<version>0.1.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>Docker Image for Axiom Pinpointing Experiments</name>
-	<url>https://github.com/satpinpointing/docker-satpinpointing-experiments</url>
+	<name>docker-satpinpointing-experiments</name>
+	<url>https://github.com/joergschwabe/docker-satpinpointing-experiments</url>
 
 	<scm>
-		<connection>scm:git:https://github.com/satpinpointing/docker-satpinpointing-experiments.git</connection>
-		<developerConnection>scm:git:git@github.com:liveontologies/docker-satpinpointing-experiments.git</developerConnection>
-		<url>https://github.com/liveontologies/docker-pinpointing-experiments</url>
+		<connection>scm:git:https://github.com/joergschwabe/docker-satpinpointing-experiments.git</connection>
+		<developerConnection>scm:git:git@github.com:joergschwabe/docker-satpinpointing-experiments.git</developerConnection>
+		<url>https://github.com/joergschwabe/docker-pinpointing-experiments</url>
 		<tag>HEAD</tag>
 	</scm>
 
@@ -27,11 +27,11 @@
 	</licenses>
 
 	<organization>
-		<name>Live Ontologies Project</name>
-		<url>http://liveontologies.org</url>
+		<name>Github</name>
+		<url>http://github.com</url>
 	</organization>
 
-	<inceptionYear>2017</inceptionYear>
+	<inceptionYear>2019</inceptionYear>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -52,7 +52,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.satpinpointing</groupId>
+			<groupId>com.github.joergschwabe</groupId>
 			<artifactId>satpinpointing-experiments</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -85,7 +85,7 @@
 							<name>joergschwabe/satpinpointing:${project.version}</name>
 							<alias>pinpointing-container</alias>
 							<build>
-								<dockerFileDir>pinpointing</dockerFileDir>
+								<dockerFileDir>satpinpointing</dockerFileDir>
 								<assembly>
 									<descriptorRef>artifact-with-dependencies</descriptorRef>
 								</assembly>
