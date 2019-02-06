@@ -14,7 +14,7 @@
 	<scm>
 		<connection>scm:git:https://github.com/joergschwabe/docker-satpinpointing-experiments.git</connection>
 		<developerConnection>scm:git:git@github.com:joergschwabe/docker-satpinpointing-experiments.git</developerConnection>
-		<url>https://github.com/joergschwabe/docker-pinpointing-experiments</url>
+		<url>https://github.com/joergschwabe/docker-satpinpointing-experiments</url>
 		<tag>HEAD</tag>
 	</scm>
 
@@ -25,13 +25,6 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-
-	<organization>
-		<name>Github</name>
-		<url>http://github.com</url>
-	</organization>
-
-	<inceptionYear>2019</inceptionYear>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -82,8 +75,8 @@
 				<configuration>
 					<images>
 						<image>
-							<name>joergschwabe/satpinpointing:${project.version}</name>
-							<alias>pinpointing-container</alias>
+							<name>joergschwabe/docker-satpinpointing-experiments:${project.version}</name>
+							<alias>docker-satpinpointing-experiments</alias>
 							<build>
 								<dockerFileDir>satpinpointing</dockerFileDir>
 								<assembly>
@@ -115,38 +108,6 @@
 					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
 					<autoReleaseAfterClose>true</autoReleaseAfterClose>
 				</configuration>
-			</plugin>
-
-			<plugin>
-				<!-- the plugin used to generate license headers -->
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>license-maven-plugin</artifactId>
-				<version>1.9</version>
-				<configuration>
-					<verbose>false</verbose>
-					<addSvnKeyWords>true</addSvnKeyWords>
-					<extraExtensions>
-						<g>java</g>
-						<jj>java</jj>
-					</extraExtensions>
-				</configuration>
-				<executions>
-					<execution>
-						<id>first</id>
-						<goals>
-							<goal>update-file-header</goal>
-							<goal>update-project-license</goal>
-						</goals>
-						<phase>package</phase>
-						<configuration>
-							<licenseName>apache_v2</licenseName>
-							<roots>
-								<root>src/main/java</root>
-								<root>src/test/java</root>
-							</roots>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 	</build>

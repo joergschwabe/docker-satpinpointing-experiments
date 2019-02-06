@@ -115,9 +115,9 @@ do
 	
 	NAME=`basename -s ".owl" $ONTOLOGY`
 	echo `date "$TIME_LOG_FORMAT"` "generating queries for $NAME"
-	java $JAVA_MEMORY_OPTIONS -Dlog4j.configurationFile=log4j2-paramfiles.xml -Dlog.file.out=$QUERIES_DIR/$NAME.sorted.out.log -Dlog.file.err=$QUERIES_DIR/$NAME.sorted.err.log -cp "$CLASSPATH" org.liveontologies.pinpointing.ExtractSubsumptions $QUERY_GENERATION_OPTIONS --sort $ONTOLOGIES_DIR/$ONTOLOGY $QUERIES_DIR/$NAME.queries.sorted
-	java $JAVA_MEMORY_OPTIONS -cp "$CLASSPATH" org.liveontologies.pinpointing.Shuffler 1 < $QUERIES_DIR/$NAME.queries.sorted > $QUERIES_DIR/$NAME.queries.seed1
-	java $JAVA_MEMORY_OPTIONS -Dlog4j.configurationFile=log4j2-paramfiles.xml -Dlog.file.out=$QUERIES_DIR/$NAME.bottom_up.out.log -Dlog.file.err=$QUERIES_DIR/$NAME.bottom_up.err.log -cp "$CLASSPATH" org.liveontologies.pinpointing.ExtractSubsumptions $QUERY_GENERATION_OPTIONS --traversal BOTTOM_UP --collection SUB_TO_SUPER $ONTOLOGIES_DIR/$ONTOLOGY $QUERIES_DIR/$NAME.queries.bottom_up
+	java $JAVA_MEMORY_OPTIONS -Dlog4j.configurationFile=log4j2-paramfiles.xml -Dlog.file.out=$QUERIES_DIR/$NAME.sorted.out.log -Dlog.file.err=$QUERIES_DIR/$NAME.sorted.err.log -cp "$CLASSPATH" org.satpinpointing.ExtractSubsumptions $QUERY_GENERATION_OPTIONS --sort $ONTOLOGIES_DIR/$ONTOLOGY $QUERIES_DIR/$NAME.queries.sorted
+	java $JAVA_MEMORY_OPTIONS -cp "$CLASSPATH" org.satpinpointing.Shuffler 1 < $QUERIES_DIR/$NAME.queries.sorted > $QUERIES_DIR/$NAME.queries.seed1
+	java $JAVA_MEMORY_OPTIONS -Dlog4j.configurationFile=log4j2-paramfiles.xml -Dlog.file.out=$QUERIES_DIR/$NAME.bottom_up.out.log -Dlog.file.err=$QUERIES_DIR/$NAME.bottom_up.err.log -cp "$CLASSPATH" org.satpinpointing.ExtractSubsumptions $QUERY_GENERATION_OPTIONS --traversal BOTTOM_UP --collection SUB_TO_SUPER $ONTOLOGIES_DIR/$ONTOLOGY $QUERIES_DIR/$NAME.queries.bottom_up
 done
 
 
@@ -142,7 +142,7 @@ do
 	NAME=`basename -s ".owl" $ONTOLOGY`
 	echo `date "$TIME_LOG_FORMAT"` "tracing elk inferences for $NAME"
 	PROPS='-Delk.reasoner.tracing.evictor=RecencyEvictor(1000000,0.75)'
-	java $JAVA_MEMORY_OPTIONS $PROPS -Dlog4j.configurationFile=log4j2-paramfiles.xml -Dlog.file.out=$INFS_DIR/elk/$NAME.out.log -Dlog.file.err=$INFS_DIR/elk/$NAME.err.log -cp "$CLASSPATH" org.liveontologies.pinpointing.DirectSatEncodingUsingElkCsvQuery $ONTOLOGIES_DIR/$ONTOLOGY $QUERIES_DIR/$NAME.queries.bottom_up $INFS_DIR/elk/$NAME --minimal --progress
+	java $JAVA_MEMORY_OPTIONS $PROPS -Dlog4j.configurationFile=log4j2-paramfiles.xml -Dlog.file.out=$INFS_DIR/elk/$NAME.out.log -Dlog.file.err=$INFS_DIR/elk/$NAME.err.log -cp "$CLASSPATH" org.satpinpointing.DirectSatEncodingUsingElkCsvQuery $ONTOLOGIES_DIR/$ONTOLOGY $QUERIES_DIR/$NAME.queries.bottom_up $INFS_DIR/elk/$NAME --minimal --progress
 	
 done
 
