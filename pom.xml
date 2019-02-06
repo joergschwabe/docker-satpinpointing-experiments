@@ -76,7 +76,7 @@
 					<images>
 						<image>
 							<name>joergschwabe/docker-satpinpointing-experiments:${project.version}</name>
-							<alias>docker-satpinpointing-experiments</alias>
+							<alias>satpinpointing-container</alias>
 							<build>
 								<dockerFileDir>satpinpointing</dockerFileDir>
 								<assembly>
