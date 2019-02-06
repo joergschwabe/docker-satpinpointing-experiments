@@ -1,0 +1,3 @@
+(implies Endocardium (and Tissue (some contIn HeartValve)) ) 
+(implies HeartValve (some contIn Heart) ) 
+(transitive contIn) 

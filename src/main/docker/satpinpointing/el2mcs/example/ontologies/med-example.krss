@@ -1,0 +1,17 @@
+(define-primitive-concept Endocarditis
+    (and Inflammation
+     (some hasLoc Endocardium)))
+
+(define-primitive-concept Inflammation
+    (and Disease
+     (some actsOn Tissue)))
+
+(define-primitive-concept Endocardium
+    (and Tissue
+     (some contIn HeartValve)))
+
+(define-primitive-concept HeartValve  (some contIn Heart))
+(define-concept HeartDisease (and Disease (some hasLoc Heart)))
+
+(role-inclusion (compose contIn contIn) contIn)
+(role-inclusion (compose hasLoc contIn) hasLoc)

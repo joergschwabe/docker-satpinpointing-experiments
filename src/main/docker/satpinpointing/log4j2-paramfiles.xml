@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+	<Appenders>
+		<File name="fileout" fileName="${sys:log.file.out}" append="false">
+			<ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="ACCEPT" />
+			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+		</File>
+		<File name="fileerr" fileName="${sys:log.file.err}" append="false">
+			<ThresholdFilter level="ERROR" />
+			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+		</File>
+		<Console name="stderr" target="SYSTEM_ERR">
+			<ThresholdFilter level="ERROR" />
+			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+		</Console>
+	</Appenders>
+	<Loggers>
+		<Root level="info">
+			<AppenderRef ref="fileout" />
+			<AppenderRef ref="fileerr" />
+			<AppenderRef ref="stderr" />
+		</Root>
+		<Logger name="org.semanticweb.elk.reasoner" level="warn" />
+		<Logger name="org.semanticweb.elk.reasoner.stages.AbstractReasonerStage" level="info" />
+		<Logger name="org.semanticweb.elk.reasoner.tracing.TraceState" level="info" />
+	</Loggers>
+</Configuration>

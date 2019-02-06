@@ -1,0 +1,2 @@
+6 (transitive contIn)
+7 (role-inclusion (compose hasLoc contIn) hasLoc)

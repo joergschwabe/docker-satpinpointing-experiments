@@ -1,0 +1,12 @@
+language: java
+git:
+  depth: 3
+matrix:
+  include:
+  - jdk: oraclejdk8
+    env: DEPLOY=true
+install: mvn install -DskipTests=true
+script: mvn test -Dassembly.skipAssembly=true -B
+after_success:
+  - test "$DEPLOY" = true -a "$TRAVIS_PULL_REQUEST" = false 
+    && mvn source:jar deploy docker:build docker:push --settings .travis-settings.xml -DskipTests=true -B

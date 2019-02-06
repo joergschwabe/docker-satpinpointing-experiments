@@ -1,0 +1,11 @@
+/target/
+.settings/
+.classpath
+.project
+.pydevproject
+.idea
+*.iml
+META-INF/
+plugin.xml
+catalog-v???.xml
+
