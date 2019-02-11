@@ -19,7 +19,7 @@
  * limitations under the License.
  * #L%
  */
-package org.satpinpointing;
+package com.github.joergschwabe;
 
 import java.io.BufferedReader;
 import java.io.File;

@@ -24,5 +24,5 @@ ENV PORT $PORT
 EXPOSE $PORT
 
 # Must be in the shell form so that the variable substitution works
-CMD java -cp 'maven/*' org.satpinpointing.ExperimentServer --port $PORT --exps available_experiments --workspace workspace \
+CMD java -cp 'maven/*' com.github.joergschwabe.ExperimentServer --port $PORT --exps available_experiments --workspace workspace \
 	./scripts/run_ELK-SAT_experiments.sh '<t>' '<g>' '<s>' '<o>' docker scripts workspace '<q>'
