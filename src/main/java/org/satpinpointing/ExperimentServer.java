@@ -43,9 +43,10 @@ import java.util.regex.Pattern;
 
 import javax.annotation.concurrent.GuardedBy;
 
-import org.satpinpointing.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.joergschwabe.Utils;
 
 import fi.iki.elonen.NanoHTTPD;
 import fi.iki.elonen.NanoHTTPD.Response.Status;
