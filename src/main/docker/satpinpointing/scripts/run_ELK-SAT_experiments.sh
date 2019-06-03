@@ -24,15 +24,10 @@ INFS_DIR=$WORKSPACE_DIR/inferences
 EXPERIMENT_DIR=$WORKSPACE_DIR/experiments
 LOGS_DIR=$WORKSPACE_DIR/logs
 RESULTS_DIR=$WORKSPACE_DIR/results
-PLOTS_DIR=$RESULTS_DIR/plots
 RESULTS_ARCHIVE=$WORKSPACE_DIR/results.zip
-
-
 
 DATE=`date +%y-%m-%d`
 TIME_LOG_FORMAT='+%y-%m-%d %H:%M:%S'
-
-
 
 # Obtain the ontologies
 
@@ -185,64 +180,17 @@ do
 done
 
 
-
-# Plot the plots
-
-echo `date "$TIME_LOG_FORMAT"` "plotting"
-
-mkdir -p $PLOTS_DIR
-
-for INF_TYPE in `ls -1 $INFS_DIR`
-do
-	
-	PLOT_LEGEND=""
-	PLOT_ARGS=""
-	for EXPERIMENT in `ls -1 $EXPERIMENT_DIR`
-	do
-		
-		EXPERIMENT_NAME=`basename -s ".sh" $EXPERIMENT`
-		PLOT_ARGS="$PLOT_ARGS $EXPERIMENT_NAME"
-		
-		PLOT_LEGEND=""
-		for NAME in `ls -1 $INFS_DIR/$INF_TYPE/`
-		do
-			if [ ! -d $INFS_DIR/$INF_TYPE/$NAME ]
-			then
-				continue
-			fi
-			
-			PLOT_LEGEND="$PLOT_LEGEND $NAME"
-			
-			DIR_NAME=$DATE.$NAME.$EXPERIMENT_NAME.$MACHINE_NAME.$INF_TYPE
-			RECORD=$LOGS_DIR/$DIR_NAME/record.csv
-			
-			PLOT_ARGS="$PLOT_ARGS $RECORD"
-			
-		done
-		
-	done
-	
-	$SCRIPTS_DIR/plot_row.r $PLOTS_DIR/plot.$INF_TYPE.svg $PLOT_LEGEND -- $PLOT_ARGS >/dev/null 2>/dev/null
-	
-done
-
-
-
 # Pack the results
 
 echo `date "$TIME_LOG_FORMAT"` "packing the results"
 
 CURRENT_DIR=`pwd`
-ABSPLUTE_RESULTS_ARCHIVE=`realpath $RESULTS_ARCHIVE`
+ABSOLUTE_RESULTS_ARCHIVE=`realpath $RESULTS_ARCHIVE`
 cd $WORKSPACE_DIR
 
-zip -r -q $ABSPLUTE_RESULTS_ARCHIVE `basename $RESULTS_DIR`
+zip -r -q $ABSOLUTE_RESULTS_ARCHIVE `basename $RESULTS_DIR`
 
 cd $CURRENT_DIR
 
 
-
 echo `date "$TIME_LOG_FORMAT"` "Done."
-
-
-

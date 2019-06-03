@@ -23,6 +23,7 @@ package com.github.joergschwabe;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -33,20 +34,21 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map; 
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.concurrent.GuardedBy;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.github.joergschwabe.Utils;
 
 import fi.iki.elonen.NanoHTTPD;
 import fi.iki.elonen.NanoHTTPD.Response.Status;
@@ -124,6 +126,7 @@ public class ExperimentServer extends NanoHTTPD {
 	private static final String WS_INPUT_ = "input";
 	private static final String WS_EXPS_ = "experiments";
 	private static final String WS_RESULTS_ = "results";
+	private static final String WS_ONTOLOGIES_ = "ontologies";
 	private static final String WS_PLOTS_ = "plots";
 	private static final String WS_RESULTS_ARCHIVE_ = "results.zip";
 
@@ -137,6 +140,7 @@ public class ExperimentServer extends NanoHTTPD {
 		Utils.cleanIfNotDir(this.inputDir_);
 		this.expsDir_ = new File(workspace, WS_EXPS_);
 		this.resultsDir_ = new File(workspace, WS_RESULTS_);
+		this.ontologiesDir_ = new File(workspace, WS_ONTOLOGIES_);
 		this.plotsDir_ = new File(resultsDir_, WS_PLOTS_);
 		this.resultsFile_ = new File(workspace, WS_RESULTS_ARCHIVE_);
 		this.command_ = command;
@@ -149,6 +153,7 @@ public class ExperimentServer extends NanoHTTPD {
 	private final File inputDir_;
 	private final File expsDir_;
 	private final File resultsDir_;
+	private final File ontologiesDir_;
 	private final File plotsDir_;
 	private final File resultsFile_;
 	private final String[] command_;
@@ -244,12 +249,15 @@ public class ExperimentServer extends NanoHTTPD {
 			+ "</body>\n"
 			+ "</html>";
 	private static final String TEMPLATE_RESULTS_ = "<!doctype html>\n"
+			+ "<head>\n"
+			+ "  <script src=\"https://cdn.plot.ly/plotly-latest.min.js\"></script>"
+			+ "</head>\n"
 			+ "<body>\n"
 			+ "  <h1>Experiment results</h1>\n"
 			+ "  <p>Download the results from <a href=/results.zip>here</a>."
 			+ "  See the log <a href=/done/>here</a>.\n"
 			+ "  Or start from beginning <a href=/>here</a>.</p>\n"
-			+ "  %s\n"// The plot
+			+ "  %s\n"// The interactive plot
 			+ "  %s\n"// The result list
 			+ "</body>";
 	// The first line and no <html> tag seem to have huge impact on performance!
@@ -604,16 +612,6 @@ public class ExperimentServer extends NanoHTTPD {
 		// else
 
 		// Paste the SVG plots into the template.
-		final StringBuilder plotString = new StringBuilder();
-		for (final String plotFileName : plotsDir_.list()) {
-			plotString.append("<h3>");
-			plotString.append(plotFileName);
-			plotString.append("</h3>\n");
-			plotString.append("<img src='/results/plots/");
-			plotString.append(plotFileName);
-			plotString.append("' />\n");
-		}
-
 		final StringBuilder resultList = new StringBuilder("<ul>\n");
 		final String[] fileNames = resultsDir_.list(new FilenameFilter() {
 			@Override
@@ -631,8 +629,131 @@ public class ExperimentServer extends NanoHTTPD {
 		}
 		resultList.append("</ul>");
 
+		File[] files = resultsDir_.listFiles(new FileFilter() {
+			@Override
+			public boolean accept(File pathname) {
+				return pathname.getName().endsWith(".csv");
+			}
+		});
+		BufferedReader br = null;
+		
+		StringBuilder interactivePlotString = new StringBuilder();
+		ArrayList<QueryResult> queryResult = new ArrayList<QueryResult>();
+		ArrayList<String> queryNames = new ArrayList<String>();
+		ArrayList<Double> times = new ArrayList<Double>();
+		ArrayList<Integer> xAxis = new ArrayList<Integer>();
+		int i=0;
+		final String[] ontologieNames = ontologiesDir_.list();
+		for (final String ontologieFileName : ontologieNames) {
+			String ontologieName = FilenameUtils.removeExtension(ontologieFileName);
+			interactivePlotString.append("<div id=\"myDiv" + i +"\"><!-- Plotly chart will be drawn inside this DIV --></div>\n" + 
+					"<script>\n" + 
+					"    var traces = [");			
+			
+			for(final File file : files) {
+				String fileName = file.getName();
+				String[] fileNameSplit = fileName.split("\\.");
+				if(!fileNameSplit[1].equals(ontologieName)) {
+					continue;
+				}
+				String[] inputs = null;
+				String line;
+				queryResult.clear();
+				times.clear();
+				queryNames.clear();
+				xAxis.clear();
+				int nameIndex = 0;
+				int timeIndex = 0;
+				try {
+					br = new BufferedReader(new FileReader(file));
+					if((line=br.readLine()) != null) {
+		                inputs = line.split(",");
+		                for (int j = 0; j < inputs.length; j++) {
+							if(inputs[j].equals("query")) {
+								nameIndex = j;
+							}
+							if(inputs[j].equals("time")) {
+								timeIndex = j;
+							}
+						}
+					}
+					while((line=br.readLine()) != null) {
+		                inputs = line.split(",");
+		                queryResult.add(new QueryResult(inputs[nameIndex],Double.valueOf(inputs[timeIndex])/1000));
+					}
+					
+					queryResult.sort(Comparator.comparing((QueryResult q) -> q.time));
+					int qSize = queryResult.size()-1;
+					double counter = 0;
+					
+					for(QueryResult qr : queryResult) {
+						xAxis.add(Integer.valueOf((int) ((counter++*100)/qSize)));
+						queryNames.add(qr.query);
+						times.add(qr.time);
+					}
+					
+					interactivePlotString.append(
+					"{\n" + 
+					"  x: "+xAxis.toString()+", \n" + 
+					"  y: "+times.toString()+",\n" + 
+					"  text: "+queryNames.toString()+",\n" + 
+					"  name: '"+fileNameSplit[2]+"',\n" + 
+					"  mode: 'lines+markers'\n" + 
+					"},\n");
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+					if (br != null) {
+						try {
+							br.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+			
+			interactivePlotString.append("];\n" +
+			"    var layout = {\n" + 
+			"  	   title: 'Plot for "+ontologieName+"',\n" + 
+			"      xaxis: {\n" + 
+			"        title: '\\% of queries',\n" +
+			"        showline: true,\n" + 
+			"        tickvals: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],\n" + 
+			"        ticktext: ['', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100'],\n" + 
+			"        mirror: 'ticks',\n" + 
+			"        linewidth: 1,\n" + 
+			"        range: [0,100] \n" + 
+			"      },\n" + 
+			"      yaxis: {\n" + 
+			"       type: 'log',\n" + 
+			"    	tickvals: [0.001, 0.01, 0.1, 1, 10, 60],\n" + 
+			"    	ticktext: ['', '0.01', '0.1', '1', '10', '60'],\n" + 
+			"    	mirror: 'ticks',\n" + 
+			"    	linewidth: 1,\n" + 
+			"    	range: [-3, 2],\n" +
+			"       title: 'time in seconds'\n" +
+			"      }\n" + 
+			"    };\n" + 
+			"  Plotly.newPlot('myDiv"+i+"', traces, layout);\n" + 
+			"</script>\n");
+			i++;
+		}
+
 		return newFixedLengthResponse(String.format(TEMPLATE_RESULTS_,
-				plotString.toString(), resultList.toString()));
+				interactivePlotString.toString(), resultList.toString()));
+	}
+
+	static class QueryResult {
+		final String query;
+		final double time;
+
+		QueryResult(String query, double time) {
+			this.query = query;
+			this.time = time;
+		}
 	}
 
 	private Response resultFileView(final IHTTPSession session,
