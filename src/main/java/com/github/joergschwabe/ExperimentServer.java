@@ -698,7 +698,8 @@ public class ExperimentServer extends NanoHTTPD {
 					"  y: "+times.toString()+",\n" + 
 					"  text: "+queryNames.toString()+",\n" + 
 					"  name: '"+fileNameSplit[2]+"',\n" + 
-					"  mode: 'lines+markers'\n" + 
+					"  mode: 'lines+markers',\n" + 
+					"  line: {shape: 'line'}\n" +
 					"},\n");
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
@@ -714,7 +715,7 @@ public class ExperimentServer extends NanoHTTPD {
 					}
 				}
 			}
-			
+
 			interactivePlotString.append("];\n" +
 			"    var layout = {\n" + 
 			"  	   title: 'Plot for "+ontologieName+"',\n" + 
