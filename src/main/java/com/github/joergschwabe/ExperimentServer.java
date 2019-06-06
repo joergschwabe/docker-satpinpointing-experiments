@@ -639,6 +639,7 @@ public class ExperimentServer extends NanoHTTPD {
 		
 		StringBuilder plotString = new StringBuilder();
 		ArrayList<QueryResult> queryResult = new ArrayList<QueryResult>();
+		ArrayList<QueryResult> minimumResult = new ArrayList<QueryResult>();
 		ArrayList<Double> xAxis = new ArrayList<Double>();
 		ArrayList<Integer> opacities = new ArrayList<Integer>();
 		ArrayList<ArrayList<String>> queryArr = new ArrayList<ArrayList<String>>();
@@ -653,13 +654,14 @@ public class ExperimentServer extends NanoHTTPD {
 					"<div id=\"clickinfo"+i+"\" style=\"margin-left:80px;\"></div>\n"+
 					"<div id=\"hoverinfo"+i+"\" style=\"margin-left:80px;\"></div>\n"+
 					"<script>\n" + 
-					"    var colors = ['#426CDA','#53CE40','#FFC100'],\n" + 
+					"    var colors = ['#426CDA','#53CE40','#FFC100','#000000'],\n" + 
 					"    traces = [");			
-			
+
 			int k=0;
 			expNames.clear();
 			queryArr.clear();
 			timesArr.clear();
+			minimumResult.clear();
 			for(final File file : files) {
 				String fileName = file.getName();
 				String[] fileNameSplit = fileName.split("\\.");
@@ -674,6 +676,7 @@ public class ExperimentServer extends NanoHTTPD {
 				String line;
 				queryResult.clear();
 				xAxis.clear();
+				opacities.clear();
 				int nameIndex = 0;
 				int timeIndex = 0;
 				try {
@@ -689,14 +692,26 @@ public class ExperimentServer extends NanoHTTPD {
 							}
 						}
 					}
+					int counter =0;
 					while((line=br.readLine()) != null) {
 		                inputs = line.split(",");
-		                queryResult.add(new QueryResult(inputs[nameIndex],Double.valueOf(inputs[timeIndex])/1000));
+		                double time = Double.valueOf(inputs[timeIndex])/1000;
+						QueryResult qr = new QueryResult(inputs[nameIndex],time);
+						queryResult.add(qr);
+						if(k == 0) {
+							minimumResult.add(qr);
+						} else {
+							if(minimumResult.get(counter).time > time) {
+								minimumResult.remove(counter);
+								minimumResult.add(counter,qr);
+							}
+							counter++;
+						}
 					}
 					
 					queryResult.sort(Comparator.comparing((QueryResult q) -> q.time));
 					int qSize = queryResult.size();
-					int counter = 0;
+					counter = 0;
 					
 					for(QueryResult qr : queryResult) {
 						xAxis.add((++counter*100.0)/qSize);
@@ -731,6 +746,31 @@ public class ExperimentServer extends NanoHTTPD {
 				queryArr.add(queryNames);
 				timesArr.add(times);
 			}
+
+			minimumResult.sort(Comparator.comparing((QueryResult q) -> q.time));
+			ArrayList<String> queryNames = new ArrayList<String>();
+			ArrayList<Double> times = new ArrayList<Double>();
+			opacities.clear();
+			
+			for(QueryResult qr : minimumResult) {
+				opacities.add(0);
+				queryNames.add(qr.query);
+				times.add(qr.time);
+			}
+			
+			plotString.append(
+			"{\n" + 
+			"  x: "+xAxis.toString()+", \n" + 
+			"  y: "+times.toString()+",\n" + 
+			"  name: 'minimum',\n" + 
+			"  mode: 'lines+markers',\n" +
+			"  line: {color: colors["+k+"]},\n" +
+			"  marker:{size:7, opacity:"+ opacities.toString() +"}\n" +
+			"}\n");
+			expNames.add("minimum");
+			timesArr.add(times);
+			queryArr.add(queryNames);
+			k++;
 
 			int points = xAxis.size();
 			plotString.append("];\n" +
