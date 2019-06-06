@@ -815,7 +815,9 @@ public class ExperimentServer extends NanoHTTPD {
 						"	 update = {'marker':{size:7, color: colors"+l+", opacity: "+opacities.toString()+"}};\n" + 
 						"	 Plotly.restyle('myDiv"+i+"', update,"+l+");\n");
 			}
-			plotString.append("});" +
+			plotString.append(
+				"  clickinfo"+i+".innerHTML = ' ';\n" +
+				"});" +
 			"</script>\n");
 			i++;
 		}
