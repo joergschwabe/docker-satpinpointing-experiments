@@ -1,7 +1,0 @@
-(implies Endocarditis (and Inflammation (some hasLoc Endocardium)) ) 
-(implies Inflammation (and Disease (some actsOn Tissue)) ) 
-(implies Endocardium (and Tissue (some contIn HeartValve)) ) 
-(implies HeartValve (some contIn Heart) ) 
-(equivalent HeartDisease (and Disease (some hasLoc Heart)) ) 
-(transitive contIn) 
-(role-inclusion (compose hasLoc contIn) hasLoc) 

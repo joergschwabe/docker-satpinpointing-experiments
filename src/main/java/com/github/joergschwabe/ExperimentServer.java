@@ -257,7 +257,7 @@ public class ExperimentServer extends NanoHTTPD {
 			+ "  <p>Download the results from <a href=/results.zip>here</a>."
 			+ "  See the log <a href=/done/>here</a>.\n"
 			+ "  Or start from beginning <a href=/>here</a>.</p>\n"
-			+ "  %s\n"// The interactive plot
+			+ "  %s\n"// The plots
 			+ "  %s\n"// The result list
 			+ "</body>";
 	// The first line and no <html> tag seem to have huge impact on performance!
@@ -637,30 +637,42 @@ public class ExperimentServer extends NanoHTTPD {
 		});
 		BufferedReader br = null;
 		
-		StringBuilder interactivePlotString = new StringBuilder();
+		StringBuilder plotString = new StringBuilder();
 		ArrayList<QueryResult> queryResult = new ArrayList<QueryResult>();
-		ArrayList<String> queryNames = new ArrayList<String>();
-		ArrayList<Double> times = new ArrayList<Double>();
-		ArrayList<Integer> xAxis = new ArrayList<Integer>();
+		ArrayList<Double> xAxis = new ArrayList<Double>();
+		ArrayList<Integer> opacities = new ArrayList<Integer>();
+		ArrayList<ArrayList<String>> queryArr = new ArrayList<ArrayList<String>>();
+		ArrayList<ArrayList<Double>> timesArr = new ArrayList<ArrayList<Double>>();
+		ArrayList<String> expNames = new ArrayList<String>();
 		int i=0;
 		final String[] ontologieNames = ontologiesDir_.list();
 		for (final String ontologieFileName : ontologieNames) {
 			String ontologieName = FilenameUtils.removeExtension(ontologieFileName);
-			interactivePlotString.append("<div id=\"myDiv" + i +"\"><!-- Plotly chart will be drawn inside this DIV --></div>\n" + 
+			plotString.append(
+					"<div id=\"myDiv" + i +"\"><!-- Plotly chart will be drawn inside this DIV --></div>\n" + 
+					"<div id=\"clickinfo"+i+"\" style=\"margin-left:80px;\"></div>\n"+
+					"<div id=\"hoverinfo"+i+"\" style=\"margin-left:80px;\"></div>\n"+
 					"<script>\n" + 
-					"    var traces = [");			
+					"    var colors = ['#426CDA','#53CE40','#FFC100'],\n" + 
+					"    traces = [");			
 			
+			int k=0;
+			expNames.clear();
+			queryArr.clear();
+			timesArr.clear();
 			for(final File file : files) {
 				String fileName = file.getName();
 				String[] fileNameSplit = fileName.split("\\.");
+				ArrayList<String> queryNames = new ArrayList<String>();
+				ArrayList<Double> times = new ArrayList<Double>();
+				
 				if(!fileNameSplit[1].equals(ontologieName)) {
 					continue;
 				}
+				expNames.add(fileNameSplit[2]);
 				String[] inputs = null;
 				String line;
 				queryResult.clear();
-				times.clear();
-				queryNames.clear();
 				xAxis.clear();
 				int nameIndex = 0;
 				int timeIndex = 0;
@@ -683,23 +695,24 @@ public class ExperimentServer extends NanoHTTPD {
 					}
 					
 					queryResult.sort(Comparator.comparing((QueryResult q) -> q.time));
-					int qSize = queryResult.size()-1;
-					double counter = 0;
+					int qSize = queryResult.size();
+					int counter = 0;
 					
 					for(QueryResult qr : queryResult) {
-						xAxis.add(Integer.valueOf((int) ((counter++*100)/qSize)));
+						xAxis.add((++counter*100.0)/qSize);
+						opacities.add(0);
 						queryNames.add(qr.query);
 						times.add(qr.time);
 					}
 					
-					interactivePlotString.append(
+					plotString.append(
 					"{\n" + 
 					"  x: "+xAxis.toString()+", \n" + 
 					"  y: "+times.toString()+",\n" + 
-					"  text: "+queryNames.toString()+",\n" + 
 					"  name: '"+fileNameSplit[2]+"',\n" + 
-					"  mode: 'lines+markers',\n" + 
-					"  line: {shape: 'line'}\n" +
+					"  mode: 'lines+markers',\n" +
+					"  line: {color: colors["+k+"]},\n" +
+					"  marker:{size:7, opacity:"+ opacities.toString() +"}\n" +
 					"},\n");
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
@@ -714,10 +727,15 @@ public class ExperimentServer extends NanoHTTPD {
 						}
 					}
 				}
+				k++;
+				queryArr.add(queryNames);
+				timesArr.add(times);
 			}
 
-			interactivePlotString.append("];\n" +
+			int points = xAxis.size();
+			plotString.append("];\n" +
 			"    var layout = {\n" + 
+			"      hovermode:'closest',\n" + 
 			"  	   title: 'Plot for "+ontologieName+"',\n" + 
 			"      xaxis: {\n" + 
 			"        title: '\\% of queries',\n" +
@@ -726,7 +744,7 @@ public class ExperimentServer extends NanoHTTPD {
 			"        ticktext: ['', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100'],\n" + 
 			"        mirror: 'ticks',\n" + 
 			"        linewidth: 1,\n" + 
-			"        range: [0,100] \n" + 
+			"    	 autorange: true,\n" +
 			"      },\n" + 
 			"      yaxis: {\n" + 
 			"       type: 'log',\n" + 
@@ -738,13 +756,71 @@ public class ExperimentServer extends NanoHTTPD {
 			"       title: 'time in seconds'\n" +
 			"      }\n" + 
 			"    };\n" + 
-			"  Plotly.newPlot('myDiv"+i+"', traces, layout);\n" + 
+			"  Plotly.newPlot('myDiv"+i+"', traces, layout);\n" +
+			"  myPlot = document.getElementById('myDiv"+i+"')\n" + 
+			"  myPlot.on('plotly_hover', function(data){\n" + 
+			"    len = data.points.length;\n" + 
+			"    if (len == 1) {\n" + 
+			"      pn = data.points[0].pointNumber;\n" + 
+			"      tn = data.points[0].curveNumber;\n" + 
+			"      name = data.points[0].data.name;\n" + 
+			"      query = "+queryArr.toString()+"[tn][pn];\n" +
+			"      hoverinfo"+i+".innerHTML = 'QUERY: '+ query +'<br>';\n");
+			for(int m=0; m<k; m++) {
+				for(int n=0; n<points;n++)
+				plotString.append(
+						"  if(query == "+queryArr.get(m).get(n)+") {\n" +
+						"     hoverinfo"+i+".innerHTML += '"+expNames.get(m)+": x-Value: "+xAxis.get(n)+", time: "+timesArr.get(m).get(n) +" <br>';}");
+			}
+			plotString.append(";\n" +
+			"    } else {\n" + 
+			"      hoverinfo"+i+".innerHTML = ' ';\n" + 
+			"    }\n" + 
+			"  });\n"+
+			"  myPlot.on('plotly_unhover', function(data){\n" + 
+			"    hoverinfo"+i+".innerHTML = ' ';\n" + 
+			"  });" + 
+			"  myPlot.on('plotly_click', function(data){\n" + 
+			"    pn = data.points[0].pointNumber;\n" +
+			"    tn = data.points[0].curveNumber;\n" + 
+			"    query = "+queryArr.toString()+"[tn][pn];\n" +
+			"    clickinfo"+i+".innerHTML = '<span style=\"color:#FF0000\"> QUERY '+query+'<br> </span>';");
+			for(int l=0; l < k; l++) {
+				plotString.append(
+				"    opacities"+l+"="+opacities.toString()+",\n" + 
+				"    colors"+l+"=[];\n");
+				for(int m=0; m < points; m++){
+				  plotString.append(
+				    "  colors"+l+"["+m+"] = colors["+l+"];\n" + 
+				    "  if(query == "+queryArr.get(l).get(m)+") {\n" +
+				    "    opacities"+l+"["+m+"] = 1;\n" + 
+				    "    colors"+l+"["+m+"] = '#FF0000';\n"+
+					"    clickinfo"+i+".innerHTML += '<span style=\"color:#FF0000\"> "+expNames.get(l)+": x-Value: "+xAxis.get(m)+", time: "+timesArr.get(l).get(m) +" <br> </span>';\n" +
+				    "  }\n");
+				}
+				plotString.append(				    
+					"	 update = {'marker':{size:7, color: colors"+l+", opacity: opacities"+l+"}};\n" + 
+					"	 Plotly.restyle('myDiv"+i+"', update,"+l+");\n");
+			}
+			plotString.append(
+			"  clickinfo"+i+".innerHTML += '<br>'});\n" +
+			"  myPlot.on('plotly_doubleclick', function(data){\n");
+			for(int l=0; l < k; l++) {
+				plotString.append(
+				"  colors"+l+"=[];\n");
+				for(int m=0; m < points; m++){
+				  plotString.append("  colors"+l+"["+m+"] = colors["+l+"];\n");
+				}
+				plotString.append(				    
+						"	 update = {'marker':{size:7, color: colors"+l+", opacity: "+opacities.toString()+"}};\n" + 
+						"	 Plotly.restyle('myDiv"+i+"', update,"+l+");\n");
+			}
+			plotString.append("});" +
 			"</script>\n");
 			i++;
 		}
 
-		return newFixedLengthResponse(String.format(TEMPLATE_RESULTS_,
-				interactivePlotString.toString(), resultList.toString()));
+		return newFixedLengthResponse(String.format(TEMPLATE_RESULTS_, plotString.toString(), resultList.toString()));
 	}
 
 	static class QueryResult {
