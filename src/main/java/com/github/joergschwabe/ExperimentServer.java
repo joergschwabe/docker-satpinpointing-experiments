@@ -725,7 +725,9 @@ public class ExperimentServer extends NanoHTTPD {
 					"  x: "+xAxis.toString()+", \n" + 
 					"  y: "+times.toString()+",\n" + 
 					"  name: '"+fileNameSplit[2]+"',\n" + 
-					"  mode: 'lines+markers',\n" +
+					"  mode: 'lines"
+					+ "+markers"
+					+ "',\n" +
 					"  line: {color: colors["+k+"]},\n" +
 					"  marker:{size:7, opacity:"+ opacities.toString() +"}\n" +
 					"},\n");
@@ -763,7 +765,9 @@ public class ExperimentServer extends NanoHTTPD {
 			"  x: "+xAxis.toString()+", \n" + 
 			"  y: "+times.toString()+",\n" + 
 			"  name: 'minimum',\n" + 
-			"  mode: 'lines+markers',\n" +
+			"  mode: 'lines"
+			+ "+markers"
+			+ "',\n" +
 			"  line: {color: colors["+k+"]},\n" +
 			"  marker:{size:7, opacity:"+ opacities.toString() +"}\n" +
 			"}\n");
@@ -805,12 +809,13 @@ public class ExperimentServer extends NanoHTTPD {
 			"      tn = data.points[0].curveNumber;\n" + 
 			"      name = data.points[0].data.name;\n" + 
 			"      query = "+queryArr.toString()+"[tn][pn];\n" +
-			"      hoverinfo"+i+".innerHTML = 'QUERY: '+ query +'<br>';\n");
+			"      hoverinfo"+i+".innerHTML = '<b>QUERY: '+ query +'</b><br>';\n");
 			for(int m=0; m<k; m++) {
 				for(int n=0; n<points;n++)
 				plotString.append(
 						"  if(query == "+queryArr.get(m).get(n)+") {\n" +
-						"     hoverinfo"+i+".innerHTML += '"+expNames.get(m)+": x-Value: "+xAxis.get(n)+", time: "+timesArr.get(m).get(n) +" <br>';}");
+						"     hoverinfo"+i+".innerHTML += '<span style=\"color:'+colors["+m+"]+'\"> "+expNames.get(m)+": </span>"+
+						getTime(timesArr, m, n) +" <br>';}");
 			}
 			plotString.append(";\n" +
 			"    } else {\n" + 
@@ -824,7 +829,7 @@ public class ExperimentServer extends NanoHTTPD {
 			"    pn = data.points[0].pointNumber;\n" +
 			"    tn = data.points[0].curveNumber;\n" + 
 			"    query = "+queryArr.toString()+"[tn][pn];\n" +
-			"    clickinfo"+i+".innerHTML = '<span style=\"color:#FF0000\"> QUERY '+query+'<br> </span>';");
+			"    clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\"> QUERY '+query+'</span></b><br>';");
 			for(int l=0; l < k; l++) {
 				plotString.append(
 				"    opacities"+l+"="+opacities.toString()+",\n" + 
@@ -835,10 +840,11 @@ public class ExperimentServer extends NanoHTTPD {
 				    "  if(query == "+queryArr.get(l).get(m)+") {\n" +
 				    "    opacities"+l+"["+m+"] = 1;\n" + 
 				    "    colors"+l+"["+m+"] = '#FF0000';\n"+
-					"    clickinfo"+i+".innerHTML += '<span style=\"color:#FF0000\"> "+expNames.get(l)+": x-Value: "+xAxis.get(m)+", time: "+timesArr.get(l).get(m) +" <br> </span>';\n" +
+					"    clickinfo"+i+".innerHTML += '<span style=\"color:'+colors["+l+"]+'\"> "+expNames.get(l)+": </span>" +
+					getTime(timesArr, l, m) +" <br>';\n" +
 				    "  }\n");
 				}
-				plotString.append(				    
+				plotString.append(
 					"	 update = {'marker':{size:7, color: colors"+l+", opacity: opacities"+l+"}};\n" + 
 					"	 Plotly.restyle('myDiv"+i+"', update,"+l+");\n");
 			}
@@ -863,6 +869,19 @@ public class ExperimentServer extends NanoHTTPD {
 		}
 
 		return newFixedLengthResponse(String.format(TEMPLATE_RESULTS_, plotString.toString(), resultList.toString()));
+	}
+
+	private String getTime(ArrayList<ArrayList<Double>> timesArr, int l, int m) {
+		Double time = timesArr.get(l).get(m);
+		if(time < 1) {
+			return round(time*1000)+" ms";
+		}
+		double time_hour = time*60;
+		return time_hour < 1 ? round(time)+" s" : round(time_hour)+" min";
+	}
+	
+	private Double round(Double number) {
+		return Math.round(number * 100) / 100.0;
 	}
 
 	static class QueryResult {
