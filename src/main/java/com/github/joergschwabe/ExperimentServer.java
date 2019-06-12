@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -641,7 +642,7 @@ public class ExperimentServer extends NanoHTTPD {
 		ArrayList<QueryResult> queryResult = new ArrayList<QueryResult>();
 		ArrayList<QueryResult> minimumResult = new ArrayList<QueryResult>();
 		ArrayList<Double> xAxis = new ArrayList<Double>();
-		ArrayList<Integer> opacities = new ArrayList<Integer>();
+//		ArrayList<Integer> opacities = new ArrayList<Integer>();
 		ArrayList<ArrayList<String>> queryArr = new ArrayList<ArrayList<String>>();
 		ArrayList<ArrayList<Double>> timesArr = new ArrayList<ArrayList<Double>>();
 		ArrayList<String> expNames = new ArrayList<String>();
@@ -676,7 +677,6 @@ public class ExperimentServer extends NanoHTTPD {
 				String line;
 				queryResult.clear();
 				xAxis.clear();
-				opacities.clear();
 				int nameIndex = 0;
 				int timeIndex = 0;
 				try {
@@ -715,7 +715,6 @@ public class ExperimentServer extends NanoHTTPD {
 					
 					for(QueryResult qr : queryResult) {
 						xAxis.add((++counter*100.0)/qSize);
-						opacities.add(0);
 						queryNames.add(qr.query);
 						times.add(qr.time);
 					}
@@ -726,10 +725,10 @@ public class ExperimentServer extends NanoHTTPD {
 					"  y: "+times.toString()+",\n" + 
 					"  name: '"+fileNameSplit[2]+"',\n" + 
 					"  mode: 'lines"
-					+ "+markers"
+//					+ "+markers"
 					+ "',\n" +
 					"  line: {color: colors["+k+"]},\n" +
-					"  marker:{size:7, opacity:"+ opacities.toString() +"}\n" +
+//					"  marker:{size:7, opacity:"+ opacities.toString() +"}\n" +
 					"},\n");
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
@@ -752,10 +751,8 @@ public class ExperimentServer extends NanoHTTPD {
 			minimumResult.sort(Comparator.comparing((QueryResult q) -> q.time));
 			ArrayList<String> queryNames = new ArrayList<String>();
 			ArrayList<Double> times = new ArrayList<Double>();
-			opacities.clear();
 			
 			for(QueryResult qr : minimumResult) {
-				opacities.add(0);
 				queryNames.add(qr.query);
 				times.add(qr.time);
 			}
@@ -765,17 +762,26 @@ public class ExperimentServer extends NanoHTTPD {
 			"  x: "+xAxis.toString()+", \n" + 
 			"  y: "+times.toString()+",\n" + 
 			"  name: 'minimum',\n" + 
-			"  mode: 'lines"
-			+ "+markers"
-			+ "',\n" +
+			"  mode: 'lines',\n"
+			+ "showlegend: false,\n" +
 			"  line: {color: colors["+k+"]},\n" +
-			"  marker:{size:7, opacity:"+ opacities.toString() +"}\n" +
-			"}\n");
+			"},\n");
 			expNames.add("minimum");
 			timesArr.add(times);
 			queryArr.add(queryNames);
 			k++;
 
+			ArrayList<Integer> emptyList = new ArrayList<Integer>(Collections.nCopies(k, 0));
+			ArrayList<Integer> oneList = new ArrayList<Integer>(Collections.nCopies(k, 1));
+			plotString.append(
+			"{\n" + 
+			"  x: "+emptyList.toString()+", \n" + 
+			"  y: "+emptyList.toString()+",\n" + 
+			"  mode: 'markers',\n" +
+			"  showlegend: false,\n" +
+			"  marker:{opacity:"+ emptyList.toString()+"}\n" +
+			"}\n");
+			
 			int points = xAxis.size();
 			plotString.append("];\n" +
 			"    var layout = {\n" + 
@@ -829,41 +835,31 @@ public class ExperimentServer extends NanoHTTPD {
 			"    pn = data.points[0].pointNumber;\n" +
 			"    tn = data.points[0].curveNumber;\n" + 
 			"    query = "+queryArr.toString()+"[tn][pn];\n" +
-			"    clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\"> QUERY '+query+'</span></b><br>';");
+			"    clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\"> QUERY '+query+'</span></b><br>';\n" +
+			"    xArr=[];\n"+
+			"    yArr=[];\n");
 			for(int l=0; l < k; l++) {
-				plotString.append(
-				"    opacities"+l+"="+opacities.toString()+",\n" + 
-				"    colors"+l+"=[];\n");
 				for(int m=0; m < points; m++){
 				  plotString.append(
-				    "  colors"+l+"["+m+"] = colors["+l+"];\n" + 
 				    "  if(query == "+queryArr.get(l).get(m)+") {\n" +
-				    "    opacities"+l+"["+m+"] = 1;\n" + 
-				    "    colors"+l+"["+m+"] = '#FF0000';\n"+
+					"	 xArr["+l+"] ="+xAxis.get(m)+";\n" +
+					"	 yArr["+l+"] ="+timesArr.get(l).get(m)+";\n" +
 					"    clickinfo"+i+".innerHTML += '<span style=\"color:'+colors["+l+"]+'\"> "+expNames.get(l)+": </span>" +
 					getTime(timesArr, l, m) +" <br>';\n" +
 				    "  }\n");
 				}
-				plotString.append(
-					"	 update = {'marker':{size:7, color: colors"+l+", opacity: opacities"+l+"}};\n" + 
-					"	 Plotly.restyle('myDiv"+i+"', update,"+l+");\n");
 			}
 			plotString.append(
-			"  clickinfo"+i+".innerHTML += '<br>'});\n" +
-			"  myPlot.on('plotly_doubleclick', function(data){\n");
-			for(int l=0; l < k; l++) {
-				plotString.append(
-				"  colors"+l+"=[];\n");
-				for(int m=0; m < points; m++){
-				  plotString.append("  colors"+l+"["+m+"] = colors["+l+"];\n");
-				}
-				plotString.append(				    
-						"	 update = {'marker':{size:7, color: colors"+l+", opacity: "+opacities.toString()+"}};\n" + 
-						"	 Plotly.restyle('myDiv"+i+"', update,"+l+");\n");
-			}
-			plotString.append(
+				"	update = {x: [xArr], y: [yArr],\n"+
+				"   marker:{size:7, color: '#FF0000', opacity:"+ oneList.toString() +"}};" +
+				"	Plotly.restyle('myDiv"+i+"', update, "+k+");\n" +
+				"  clickinfo"+i+".innerHTML += '<br>'});\n" +
+			
+				"  myPlot.on('plotly_doubleclick', function(data){\n" +
+				"	update = {marker:{opacity:"+ emptyList.toString() +"}};" +
+				"	Plotly.restyle('myDiv"+i+"', update, "+k+");\n" +
 				"  clickinfo"+i+".innerHTML = ' ';\n" +
-				"});" +
+				"  });\n" +
 			"</script>\n");
 			i++;
 		}
