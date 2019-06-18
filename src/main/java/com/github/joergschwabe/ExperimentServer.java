@@ -36,7 +36,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -637,18 +636,16 @@ public class ExperimentServer extends NanoHTTPD {
 			}
 		});
 		BufferedReader br = null;
-		
+
 		StringBuilder plotString = new StringBuilder();
 		ArrayList<QueryResult> queryResult = new ArrayList<QueryResult>();
 		ArrayList<QueryResult> minimumResult = new ArrayList<QueryResult>();
 		ArrayList<Double> xAxis = new ArrayList<Double>();
-//		ArrayList<Integer> opacities = new ArrayList<Integer>();
 		ArrayList<ArrayList<String>> queryArr = new ArrayList<ArrayList<String>>();
 		ArrayList<ArrayList<Double>> timesArr = new ArrayList<ArrayList<Double>>();
 		ArrayList<String> expNames = new ArrayList<String>();
 		int i=0;
-		final String[] ontologieNames = ontologiesDir_.list();
-		for (final String ontologieFileName : ontologieNames) {
+		for (final String ontologieFileName : ontologiesDir_.list()) {
 			String ontologieName = FilenameUtils.removeExtension(ontologieFileName);
 			plotString.append(
 					"<div id=\"myDiv" + i +"\"><!-- Plotly chart will be drawn inside this DIV --></div>\n" + 
@@ -666,12 +663,13 @@ public class ExperimentServer extends NanoHTTPD {
 			for(final File file : files) {
 				String fileName = file.getName();
 				String[] fileNameSplit = fileName.split("\\.");
-				ArrayList<String> queryNames = new ArrayList<String>();
-				ArrayList<Double> times = new ArrayList<Double>();
-				
 				if(!fileNameSplit[1].equals(ontologieName)) {
 					continue;
 				}
+				
+				ArrayList<String> queryNames = new ArrayList<String>();
+				ArrayList<Double> times = new ArrayList<Double>();
+				ArrayList<String> text = new ArrayList<String>();
 				expNames.add(fileNameSplit[2]);
 				String[] inputs = null;
 				String line;
@@ -714,9 +712,10 @@ public class ExperimentServer extends NanoHTTPD {
 					counter = 0;
 					
 					for(QueryResult qr : queryResult) {
-						xAxis.add((++counter*100.0)/qSize);
+						xAxis.add(round((++counter*100.0)/qSize));
 						queryNames.add(qr.query);
 						times.add(qr.time);
+						text.add("'"+getTime(qr.time)+"'");
 					}
 					
 					plotString.append(
@@ -724,11 +723,10 @@ public class ExperimentServer extends NanoHTTPD {
 					"  x: "+xAxis.toString()+", \n" + 
 					"  y: "+times.toString()+",\n" + 
 					"  name: '"+fileNameSplit[2]+"',\n" + 
-					"  mode: 'lines"
-//					+ "+markers"
-					+ "',\n" +
+					"  mode: 'lines',\n" +
+					"  text: "+text.toString()+",\n" + 
+					"  hoverinfo: 'x+text',\n" +
 					"  line: {color: colors["+k+"]},\n" +
-//					"  marker:{size:7, opacity:"+ opacities.toString() +"}\n" +
 					"},\n");
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
@@ -751,10 +749,12 @@ public class ExperimentServer extends NanoHTTPD {
 			minimumResult.sort(Comparator.comparing((QueryResult q) -> q.time));
 			ArrayList<String> queryNames = new ArrayList<String>();
 			ArrayList<Double> times = new ArrayList<Double>();
+			ArrayList<String> text = new ArrayList<String>();
 			
 			for(QueryResult qr : minimumResult) {
 				queryNames.add(qr.query);
 				times.add(qr.time);
+				text.add("'"+getTime(qr.time)+"'");
 			}
 			
 			plotString.append(
@@ -762,8 +762,10 @@ public class ExperimentServer extends NanoHTTPD {
 			"  x: "+xAxis.toString()+", \n" + 
 			"  y: "+times.toString()+",\n" + 
 			"  name: 'minimum',\n" + 
-			"  mode: 'lines',\n"
-			+ "showlegend: false,\n" +
+			"  mode: 'lines',\n" +
+			"  text: "+text.toString()+",\n" + 
+			"  hoverinfo: 'x+text',\n" +
+			"  showlegend: false,\n" +
 			"  line: {color: colors["+k+"]},\n" +
 			"},\n");
 			expNames.add("minimum");
@@ -771,15 +773,11 @@ public class ExperimentServer extends NanoHTTPD {
 			queryArr.add(queryNames);
 			k++;
 
-			ArrayList<Integer> emptyList = new ArrayList<Integer>(Collections.nCopies(k, 0));
-			ArrayList<Integer> oneList = new ArrayList<Integer>(Collections.nCopies(k, 1));
 			plotString.append(
 			"{\n" + 
-			"  x: "+emptyList.toString()+", \n" + 
-			"  y: "+emptyList.toString()+",\n" + 
+			"  x: [], \n" + 
+			"  y: [],\n" + 
 			"  mode: 'markers',\n" +
-			"  showlegend: false,\n" +
-			"  marker:{opacity:"+ emptyList.toString()+"}\n" +
 			"}\n");
 			
 			int points = xAxis.size();
@@ -821,7 +819,7 @@ public class ExperimentServer extends NanoHTTPD {
 				plotString.append(
 						"  if(query == "+queryArr.get(m).get(n)+") {\n" +
 						"     hoverinfo"+i+".innerHTML += '<span style=\"color:'+colors["+m+"]+'\"> "+expNames.get(m)+": </span>"+
-						getTime(timesArr, m, n) +" <br>';}");
+						getTime(timesArr.get(m).get(n)) +" <br>';}");
 			}
 			plotString.append(";\n" +
 			"    } else {\n" + 
@@ -836,27 +834,36 @@ public class ExperimentServer extends NanoHTTPD {
 			"    tn = data.points[0].curveNumber;\n" + 
 			"    query = "+queryArr.toString()+"[tn][pn];\n" +
 			"    clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\"> QUERY '+query+'</span></b><br>';\n" +
-			"    xArr=[];\n"+
-			"    yArr=[];\n");
+			"    xArr=[];\n" +
+			"    yArr=[];\n" +
+			"    text=[];\n" +
+			"    opacities=[];\n");
+
 			for(int l=0; l < k; l++) {
-				for(int m=0; m < points; m++){
+				for(int m=0; m < queryArr.get(l).size(); m++){
 				  plotString.append(
 				    "  if(query == "+queryArr.get(l).get(m)+") {\n" +
 					"	 xArr["+l+"] ="+xAxis.get(m)+";\n" +
 					"	 yArr["+l+"] ="+timesArr.get(l).get(m)+";\n" +
+					"	 text["+l+"] ='"+getTime(timesArr.get(l).get(m))+"';\n" +
+					"    opacities["+l+"] =1;\n" +
 					"    clickinfo"+i+".innerHTML += '<span style=\"color:'+colors["+l+"]+'\"> "+expNames.get(l)+": </span>" +
-					getTime(timesArr, l, m) +" <br>';\n" +
+					getTime(timesArr.get(l).get(m)) +" <br>';\n" +
 				    "  }\n");
 				}
 			}
+
 			plotString.append(
 				"	update = {x: [xArr], y: [yArr],\n"+
-				"   marker:{size:7, color: '#FF0000', opacity:"+ oneList.toString() +"}};" +
+				"   text: [text],\n" + 
+				"   hoverinfo: 'x+text',\n" +
+				"   showlegend: false,\n" +
+				"   marker:{size:7, color: '#FF0000', opacity:opacities}};" +
 				"	Plotly.restyle('myDiv"+i+"', update, "+k+");\n" +
 				"  clickinfo"+i+".innerHTML += '<br>'});\n" +
 			
 				"  myPlot.on('plotly_doubleclick', function(data){\n" +
-				"	update = {marker:{opacity:"+ emptyList.toString() +"}};" +
+				"	update = {x: [[]], y: [[]], marker:{opacity:[]}};" +
 				"	Plotly.restyle('myDiv"+i+"', update, "+k+");\n" +
 				"  clickinfo"+i+".innerHTML = ' ';\n" +
 				"  });\n" +
@@ -867,13 +874,11 @@ public class ExperimentServer extends NanoHTTPD {
 		return newFixedLengthResponse(String.format(TEMPLATE_RESULTS_, plotString.toString(), resultList.toString()));
 	}
 
-	private String getTime(ArrayList<ArrayList<Double>> timesArr, int l, int m) {
-		Double time = timesArr.get(l).get(m);
+	private String getTime(Double time) {
 		if(time < 1) {
 			return round(time*1000)+" ms";
 		}
-		double time_hour = time*60;
-		return time_hour < 1 ? round(time)+" s" : round(time_hour)+" min";
+		return time < 60 ? round(time)+" s" : round(time/60)+" min";
 	}
 	
 	private Double round(Double number) {
