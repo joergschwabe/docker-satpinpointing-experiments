@@ -813,66 +813,150 @@ public class ExperimentServer extends NanoHTTPD {
 			"      tn = data.points[0].curveNumber;\n" + 
 			"      name = data.points[0].data.name;\n" + 
 			"      query = "+queryArr.toString()+"[tn][pn];\n" +
-			"      hoverinfo"+i+".innerHTML = '<b>QUERY: '+ query +'</b><br>';\n");
+			"      hoverinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\"> QUERY '+query+'</span></b><br>';\n" +
+			"      xArr=[];\n" +
+			"      yArr=[];\n" +
+			"      text=[];\n" +
+			"      opacities=[];\n");
 			for(int m=0; m<k; m++) {
 				for(int n=0; n<points;n++)
 				plotString.append(
 						"  if(query == "+queryArr.get(m).get(n)+") {\n" +
+						"	 xArr["+m+"] ="+xAxis.get(n)+";\n" +
+						"	 yArr["+m+"] ="+timesArr.get(m).get(n)+";\n" +
+						"	 text["+m+"] ='"+getTime(timesArr.get(m).get(n))+"';\n" +
+						"    opacities["+m+"] =1;\n" +
 						"     hoverinfo"+i+".innerHTML += '<span style=\"color:'+colors["+m+"]+'\"> "+expNames.get(m)+": </span>"+
 						getTime(timesArr.get(m).get(n)) +" <br>';}");
 			}
+			
+			
 			plotString.append(";\n" +
+			"	update = {x: [xArr], y: [yArr],\n"+
+			"   text: [text],\n" + 
+			"   hoverinfo: 'x+text',\n" +
+			"   showlegend: false,\n" +
+			"   marker:{size:7, color: '#FF0000', opacity:opacities}};" +
+			"	Plotly.restyle('myDiv"+i+"', update, "+k+");\n" +
 			"    } else {\n" + 
 			"      hoverinfo"+i+".innerHTML = ' ';\n" + 
 			"    }\n" + 
 			"  });\n"+
 			"  myPlot.on('plotly_unhover', function(data){\n" + 
+			"	 update = {x: [[]], y: [[]], marker:{opacity:[]}};" +
+			"	 Plotly.restyle('myDiv"+i+"', update, "+k+");\n" +
 			"    hoverinfo"+i+".innerHTML = ' ';\n" + 
-			"  });" + 
-			"  myPlot.on('plotly_click', function(data){\n" + 
-			"    pn = data.points[0].pointNumber;\n" +
-			"    tn = data.points[0].curveNumber;\n" + 
-			"    query = "+queryArr.toString()+"[tn][pn];\n" +
-			"    clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\"> QUERY '+query+'</span></b><br>';\n" +
-			"    xArr=[];\n" +
-			"    yArr=[];\n" +
-			"    text=[];\n" +
-			"    opacities=[];\n");
-
-			for(int l=0; l < k; l++) {
-				for(int m=0; m < queryArr.get(l).size(); m++){
-				  plotString.append(
-				    "  if(query == "+queryArr.get(l).get(m)+") {\n" +
-					"	 xArr["+l+"] ="+xAxis.get(m)+";\n" +
-					"	 yArr["+l+"] ="+timesArr.get(l).get(m)+";\n" +
-					"	 text["+l+"] ='"+getTime(timesArr.get(l).get(m))+"';\n" +
-					"    opacities["+l+"] =1;\n" +
-					"    clickinfo"+i+".innerHTML += '<span style=\"color:'+colors["+l+"]+'\"> "+expNames.get(l)+": </span>" +
-					getTime(timesArr.get(l).get(m)) +" <br>';\n" +
-				    "  }\n");
-				}
-			}
-
-			plotString.append(
-				"	update = {x: [xArr], y: [yArr],\n"+
-				"   text: [text],\n" + 
-				"   hoverinfo: 'x+text',\n" +
-				"   showlegend: false,\n" +
-				"   marker:{size:7, color: '#FF0000', opacity:opacities}};" +
-				"	Plotly.restyle('myDiv"+i+"', update, "+k+");\n" +
-				"  clickinfo"+i+".innerHTML += '<br>'});\n" +
-			
-				"  myPlot.on('plotly_doubleclick', function(data){\n" +
-				"	update = {x: [[]], y: [[]], marker:{opacity:[]}};" +
-				"	Plotly.restyle('myDiv"+i+"', update, "+k+");\n" +
-				"  clickinfo"+i+".innerHTML = ' ';\n" +
-				"  });\n" +
+			"  });" +
+//			+ 
+//			"  myPlot.on('plotly_click', function(data){\n" + 
+//			"    pn = data.points[0].pointNumber;\n" +
+//			"    tn = data.points[0].curveNumber;\n" + 
+//			"    query = "+queryArr.toString()+"[tn][pn];\n" +
+//			"    clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\"> QUERY '+query+'</span></b><br>';\n" +
+//			"    xArr=[];\n" +
+//			"    yArr=[];\n" +
+//			"    text=[];\n" +
+//			"    opacities=[];\n");
+//
+//			for(int m=0; m < k; m++) {
+//				for(int n=0; n < queryArr.get(m).size(); n++){
+//				  plotString.append(
+//				    "  if(query == "+queryArr.get(m).get(n)+") {\n" +
+//					"	 xArr["+m+"] ="+xAxis.get(n)+";\n" +
+//					"	 yArr["+m+"] ="+timesArr.get(m).get(n)+";\n" +
+//					"	 text["+m+"] ='"+getTime(timesArr.get(m).get(n))+"';\n" +
+//					"    opacities["+m+"] =1;\n" +
+//					"    clickinfo"+i+".innerHTML += '<span style=\"color:'+colors["+m+"]+'\"> "+expNames.get(m)+": </span>" +
+//					getTime(timesArr.get(m).get(n)) +" <br>';\n" +
+//				    "  }\n");
+//				}
+//			}
+//
+//			plotString.append(
+//				"	update = {x: [xArr], y: [yArr],\n"+
+//				"   text: [text],\n" + 
+//				"   hoverinfo: 'x+text',\n" +
+//				"   showlegend: false,\n" +
+//				"   marker:{size:7, color: '#FF0000', opacity:opacities}};" +
+//				"	Plotly.restyle('myDiv"+i+"', update, "+k+");\n" +
+//				"  clickinfo"+i+".innerHTML += '<br>'});\n" +
+//			
+//				"  myPlot.on('plotly_doubleclick', function(data){\n" +
+//				"	update = {x: [[]], y: [[]], marker:{opacity:[]}};" +
+//				"	Plotly.restyle('myDiv"+i+"', update, "+k+");\n" +
+//				"  clickinfo"+i+".innerHTML = ' ';\n" +
+//				"  });\n" +
 			"</script>\n");
 			i++;
 		}
 
 		return newFixedLengthResponse(String.format(TEMPLATE_RESULTS_, plotString.toString(), resultList.toString()));
 	}
+
+//	private void addMinimal(StringBuilder plotString,
+//			ArrayList<ArrayList<Double>> timesArr, ArrayList<String> expNames, int k, ArrayList<String> queryNames,
+//			ArrayList<Double> times, ArrayList<String> text) {
+//
+//		ArrayList<Double> xAxis = new ArrayList<Double>();
+//		Set<Integer> activeExperiments = new HashSet<Integer>();
+//		Set<String> consideredQueries = new HashSet<String>();
+//		Map<String, Integer> queries = new HashMap<String, Integer>();
+//		Map<String, String> queryArr;
+//		for(int l=0; l<k; l++) {
+//			if(!activeExperiments.contains(l)) {
+//				continue;
+//			}
+//			
+//			int size = queryArr.get(l).size();
+//			
+//			for (int m = 0; m < size; m++) {
+//				String queryName = queryArr.get(l).get(m);
+//				Double time = timesArr.get(l).get(m);
+//				if(consideredQueries.add(queryName)) {
+//					queryArr(queryName, time);
+//				} else {
+//					
+//					if(minimumResult.get(counter).time > time) {
+//						minimumResult.remove(counter);
+//						minimumResult.add(counter,qr);
+//					}
+//					counter++;
+//
+//					Integer index = queries.get(queryName);
+//					if(time < queryArr.get(index)) {
+//						queries.remove(queryName);
+//						queries.put(queryName, time);
+//					}
+//				}
+//			}
+//		}
+//
+//		queries.keySet();
+//		queriesArr.sort(Comparator.comparing((QueryResult q) -> q.time));
+//
+//		int count = 0;
+//		int size = queries.size();
+//		for (String query : queries.keySet()) {
+//			xAxis.add(round((++count*100.0)/size));
+//			times.add();
+//		}
+//		
+//		plotString.append(
+//		"{\n" + 
+//		"  x: "+xAxis.toString()+", \n" + 
+//		"  y: "+times.toString()+",\n" + 
+//		"  name: 'minimum',\n" + 
+//		"  mode: 'lines',\n" +
+//		"  text: "+text.toString()+",\n" + 
+//		"  hoverinfo: 'x+text',\n" +
+//		"  showlegend: false,\n" +
+//		"  line: {color: colors["+k+"]},\n" +
+//		"},\n");
+//
+//		expNames.add("minimum");
+//		timesArr.add(times);
+//		queryArr.add(queryNames);
+//	}
 
 	private String getTime(Double time) {
 		if(time < 1) {
