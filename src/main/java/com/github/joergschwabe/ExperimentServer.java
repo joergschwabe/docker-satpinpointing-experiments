@@ -751,6 +751,7 @@ public class ExperimentServer extends NanoHTTPD {
 			"  x: [], \n" + 
 			"  y: [],\n" + 
 			"  mode: 'markers',\n" +
+			"  visible: false,\n" +
 			"}];\n");
 
 			// add layout
@@ -787,9 +788,8 @@ public class ExperimentServer extends NanoHTTPD {
 			plotString.append(
 			"  expSize = "+expSize+";\n" +
 			"  myPlot"+i+".on('plotly_legendclick', function(data){\n" + 
-			"    clickinfo"+i+".innerHTML = ' ';\n" +
 			"	 number = data.curveNumber;\n" + 
-			"	 if(myPlot"+i+".data[number].visible == 'legendonly'){\n" + 
+			"	 if(myPlot"+i+".data[number].visible == 'legendonly' || (activeLines"+i+".indexOf(number) < 0)){\n" + 
 			"		activeLines"+i+".push(number);\n" + 
 			"	 } else {\n" + 
 			"	    activeLines"+i+".splice(activeLines"+i+".indexOf(number), 1);\n" + 
@@ -798,17 +798,13 @@ public class ExperimentServer extends NanoHTTPD {
 
 			// event legend doubleclick			
 			"  myPlot"+i+".on('plotly_legenddoubleclick', function(data){\n" + 
-			"	 for(i = 0; i<expSize; i++){\n" + 
-			"	   if(myPlot"+i+".data[i].visible == true){\n" + 
-			"		 activeLines"+i+".push(i);\n" + 
-			"	   }\n" + 
-			"	 }\n" + 
-			"	 activeLines"+i+".clear();\n" + 
 			"	 number = data.curveNumber;\n" + 
 			"	 if((myPlot"+i+".data[number].visible == true) && " +
 			"        ((activeLines"+i+".length > 1) || ((activeLines"+i+".length == 1) && (myPlot"+i+".data[expSize].visible == true)))){\n" + 
+			"	   activeLines"+i+".clear();\n" + 
 			"	   activeLines"+i+".push(number);\n" + 
 			"	 } else {\n" + 
+			"	   activeLines"+i+".clear();\n" + 
 			"	   for (i = 0; i < expSize; i++) {\n" + 
 			"        activeLines"+i+".push(i);\n" + 
 			"	   }\n" + 
@@ -828,7 +824,7 @@ public class ExperimentServer extends NanoHTTPD {
 			"      tn = data.points[0].curveNumber;\n" + 
 			"      name = data.points[0].data.name;\n" + 
 			"      query = queryArr"+i+"[tn][pn];\n" +
-			"      hoverinfo"+i+".innerHTML = '<b>QUERY: '+ query + ' '+activeLines"+i+"+'</b><br> ';\n" +
+			"      hoverinfo"+i+".innerHTML = '<b>QUERY: '+ query +'</b><br> ';\n" +
 			"	   for(k = 0; k<expSize; k++){\n" + 
 			"        if(activeLines"+i+".indexOf(k) < 0){" +
 			"          continue;" +
@@ -875,12 +871,13 @@ public class ExperimentServer extends NanoHTTPD {
 			"            getTime(timesArr"+i+"[k][index])+' <br>';\n" +
 		    "        }\n" +
 			"      }" +
-		    
+
 			// plot restyle
 			"      update = {x: [xArr], y: [yArr],\n"+
 			"      text: [text],\n" + 
 			"      hoverinfo: 'x+text',\n" +
 			"      showlegend: false,\n" +
+			"      visible: true,\n" +
 			"      marker:{size:7, color: '#FF0000', opacity:[opacities]}};" +
 			"	   Plotly.restyle('myDiv"+i+"', update, expSize);\n" +
 			"      clickinfo"+i+".innerHTML += '<br>';" +
@@ -888,7 +885,7 @@ public class ExperimentServer extends NanoHTTPD {
 			"      clickinfo"+i+".innerHTML = ' ';\n" + 
 			"    }\n" + 
 			"  });\n" +
-			
+
 			// event on doubleclick
 			"  myPlot"+i+".on('plotly_doubleclick', function(data){\n" +
 			"    update = {x: [[]], y: [[]], marker:{opacity:[]}};" +
@@ -943,6 +940,7 @@ public class ExperimentServer extends NanoHTTPD {
 		"  x: "+xAxis.toString()+", \n" + 
 		"  y: "+times.toString()+",\n" + 
 		"  name: '"+expName+"',\n" + 
+		"  visible: true,\n" +
 		"  mode: 'lines',\n" +
 		"  text: "+text.toString()+",\n" + 
 		"  hoverinfo: 'x+text',\n" +
