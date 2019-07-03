@@ -794,20 +794,55 @@ public class ExperimentServer extends NanoHTTPD {
 			"	 } else {\n" + 
 			"	    activeLines"+i+".splice(activeLines"+i+".indexOf(number), 1);\n" + 
 			"	 }\n" + 
+			
+			"	 if(myPlot"+i+".data[expSize].visible == true){\n" + 
+			"      clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\">QUERY: '+query+'</span></b><br>';\n" +
+			"	   for(k = 0; k<expSize; k++){\n" + 
+			"        if(activeLines"+i+".indexOf(k) < 0){" +
+			"          continue;" +
+			"        }" +
+			"        index = queryArr"+i+"[k].indexOf(query);" +
+			"        if((index >= 0) && (clickinfo"+i+".innerHTML != '')){" +
+			"          clickinfo"+i+".innerHTML += '<span style=\"color:'+colors[k]+'\"> '+expNames"+i+"[k]+': </span>'+" +
+			"            getTime(timesArr"+i+"[k][index])+' <br>';\n" +
+		    "        }\n" +
+			"      }" +
+			"      clickinfo"+i+".innerHTML += '<br>';" +
+			"    }" +
+
+
 			"  });\n" +
 
-			// event legend doubleclick			
+			// event legend doubleclick
 			"  myPlot"+i+".on('plotly_legenddoubleclick', function(data){\n" + 
 			"	 number = data.curveNumber;\n" + 
 			"	 if((myPlot"+i+".data[number].visible == true) && " +
 			"        ((activeLines"+i+".length > 1) || ((activeLines"+i+".length == 1) && (myPlot"+i+".data[expSize].visible == true)))){\n" + 
 			"	   activeLines"+i+".clear();\n" + 
 			"	   activeLines"+i+".push(number);\n" + 
+			"      clickinfo"+i+".innerHTML = '';\n" +
 			"	 } else {\n" + 
 			"	   activeLines"+i+".clear();\n" + 
 			"	   for (i = 0; i < expSize; i++) {\n" + 
 			"        activeLines"+i+".push(i);\n" + 
 			"	   }\n" + 
+			
+			"	 if(myPlot"+i+".data[expSize].visible != false){\n" + 
+			"      clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\">QUERY: '+query+'</span></b><br>';\n" +
+			"	   for(k = 0; k<expSize; k++){\n" + 
+			"        if(activeLines"+i+".indexOf(k) < 0){" +
+			"          continue;" +
+			"        }" +
+			"        index = queryArr"+i+"[k].indexOf(query);" +
+			"        if((index >= 0) && (clickinfo"+i+".innerHTML != ' ')){" +
+			"          clickinfo"+i+".innerHTML += '<span style=\"color:'+colors[k]+'\"> '+expNames"+i+"[k]+': </span>'+" +
+			"            getTime(timesArr"+i+"[k][index])+' <br>';\n" +
+			"        }\n" +
+			"      }" +
+			"      clickinfo"+i+".innerHTML += '<br>';" +
+			"    } else {" +
+			"      clickinfo"+i+".innerHTML = '';\n" +
+			"    }" +
 			"    }\n" + 
 			"  });" +
 
@@ -819,9 +854,9 @@ public class ExperimentServer extends NanoHTTPD {
 			// event mouseover
 			"  myPlot"+i+".on('plotly_hover', function(data){\n" + 
 			"    len = data.points.length;\n" + 
-			"    if (len == 1) {\n" + 
+			"    tn = data.points[0].curveNumber;\n" + 
+			"    if ((len == 1) && (tn < expSize)) {\n" + 
 			"      pn = data.points[0].pointNumber;\n" + 
-			"      tn = data.points[0].curveNumber;\n" + 
 			"      name = data.points[0].data.name;\n" + 
 			"      query = queryArr"+i+"[tn][pn];\n" +
 			"      hoverinfo"+i+".innerHTML = '<b>QUERY: '+ query +'</b><br> ';\n" +
@@ -836,21 +871,21 @@ public class ExperimentServer extends NanoHTTPD {
 			"        }" +			
 			"      }"+ 
 			"    } else {\n" + 
-			"      hoverinfo"+i+".innerHTML = ' ';\n" + 
+			"      hoverinfo"+i+".innerHTML = '';\n" + 
 			"    }\n" + 
 			"  });\n"+
 			
 			// event not mouseover
 			"  myPlot"+i+".on('plotly_unhover', function(data){\n" + 
-			"    hoverinfo"+i+".innerHTML = ' ';\n" + 
+			"    hoverinfo"+i+".innerHTML = '';\n" + 
 			"  });" + 
 			
 			// event on click
 			"  myPlot"+i+".on('plotly_click', function(data){\n" + 
 			"    len = data.points.length;\n" + 
-			"    if (len == 1) {\n" + 
+			"    tn = data.points[0].curveNumber;\n" + 
+			"    if ((len == 1) && (tn < expSize)) {\n" + 
 			"      pn = data.points[0].pointNumber;\n" +
-			"      tn = data.points[0].curveNumber;\n" + 
 			"      query = queryArr"+i+"[tn][pn];\n" +
 			"      clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\">QUERY: '+query+'</span></b><br>';\n" +
 			"      xArr=[];\n" +
@@ -882,15 +917,15 @@ public class ExperimentServer extends NanoHTTPD {
 			"	   Plotly.restyle('myDiv"+i+"', update, expSize);\n" +
 			"      clickinfo"+i+".innerHTML += '<br>';" +
 			"    } else {\n" + 
-			"      clickinfo"+i+".innerHTML = ' ';\n" + 
+			"      clickinfo"+i+".innerHTML = '';\n" + 
 			"    }\n" + 
 			"  });\n" +
 
 			// event on doubleclick
 			"  myPlot"+i+".on('plotly_doubleclick', function(data){\n" +
-			"    update = {x: [[]], y: [[]], marker:{opacity:[]}};" +
+			"    update = {x: [[]], y: [[]], visible: false, marker:{opacity:[]}};" +
 			"	 Plotly.restyle('myDiv"+i+"', update, expSize);\n" +
-			"    clickinfo"+i+".innerHTML = ' ';\n" +
+			"    clickinfo"+i+".innerHTML = '';\n" +
 			"  });\n" +
 			
 			// some help functions
