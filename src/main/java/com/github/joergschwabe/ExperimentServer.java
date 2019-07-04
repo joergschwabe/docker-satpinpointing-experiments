@@ -711,13 +711,13 @@ public class ExperimentServer extends NanoHTTPD {
 			// start javascript
 			plotString.append(
 					"<div id=\"myDiv" + i +"\"><!-- Plotly chart will be drawn inside this DIV --></div>\n" + 
-					"<div id=\"myButton" + i +"\" style=\"text-align: center;\"><button onclick=\"myFunction"+i+"()\">Refresh</button></div>\n" + 
+					"<div id=\"refreshButton" + i +"\" style=\"text-align: center;\"><button onclick=\"refresh"+i+"()\">Refresh</button></div>\n" + 
 					"<div id=\"clickinfo"+i+"\" style=\"margin-left:80px;\"></div>\n"+
 					"<div id=\"hoverinfo"+i+"\" style=\"margin-left:80px;\"></div>\n"+
 					"<div id=\"test"+i+"\" style=\"margin-left:80px;\"></div>\n"+
 					"<script>\n" + 
 					"    var colors = ['#426CDA','#53CE40','#FFC100','#000000'],\n");			
-			
+
 			// translate objects from java to javascript
 			plotString.append(
 					"  query"+i+",\n" +
@@ -940,7 +940,7 @@ public class ExperimentServer extends NanoHTTPD {
 			"    }\n" + 
 			"	 return time < 60 ? round(time)+' s' : round(time/60)+' min';\n" + 
 			"  }\n" +
-			"  function myFunction"+i+"() {\n" + 
+			"  function refresh"+i+"() {\n" + 
 			"    minIndex = expSize-1;\n" +
 			"    if((myPlot"+i+".data[minIndex].visible == true) && (activeLines"+i+".length > 1)) {\n " +
 			"      visitedQueries=[];\n" +
