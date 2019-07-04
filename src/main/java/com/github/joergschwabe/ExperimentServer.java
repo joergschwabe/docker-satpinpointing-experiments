@@ -942,7 +942,7 @@ public class ExperimentServer extends NanoHTTPD {
 			"  }\n" +
 			"  function myFunction"+i+"() {\n" + 
 			"    minIndex = expSize-1;\n" +
-			"    if(myPlot"+i+".data[minIndex].visible == true) {\n " +
+			"    if((myPlot"+i+".data[minIndex].visible == true) && (activeLines"+i+".length > 1)) {\n " +
 			"      visitedQueries=[];\n" +
 			"      queryResultArr=[];\n" +
 			"	   for(k = 0; k<minIndex; k++){\n" + 
