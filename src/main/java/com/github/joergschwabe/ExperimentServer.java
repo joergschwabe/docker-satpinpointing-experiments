@@ -711,7 +711,6 @@ public class ExperimentServer extends NanoHTTPD {
 			// start javascript
 			plotString.append(
 					"<div id=\"myDiv" + i +"\"><!-- Plotly chart will be drawn inside this DIV --></div>\n" + 
-					"<div id=\"refreshButton" + i +"\" style=\"text-align: center;\"><button onclick=\"refresh"+i+"()\">Refresh</button></div>\n" + 
 					"<div id=\"clickinfo"+i+"\" style=\"margin-left:80px;\"></div>\n"+
 					"<div id=\"hoverinfo"+i+"\" style=\"margin-left:80px;\"></div>\n"+
 					"<div id=\"test"+i+"\" style=\"margin-left:80px;\"></div>\n"+
@@ -791,61 +790,79 @@ public class ExperimentServer extends NanoHTTPD {
 			"  expSize = "+expSize+";\n" +
 			"  myPlot"+i+".on('plotly_legendclick', function(data){\n" + 
 			"	 number = data.curveNumber;\n" + 
-			"	 if(myPlot"+i+".data[number].visible == 'legendonly' || (activeLines"+i+".indexOf(number) < 0)){\n" + 
+			"	 if(activeLines"+i+".indexOf(number) < 0){\n" + 
 			"		activeLines"+i+".push(number);\n" + 
 			"	 } else {\n" + 
 			"	    activeLines"+i+".splice(activeLines"+i+".indexOf(number), 1);\n" + 
 			"	 }\n" + 
 			
-			"	 if(myPlot"+i+".data[expSize].visible == true){\n" + 
-			"      clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\">QUERY: '+query"+i+"+'</span></b><br>';\n" +
-			"	   for(k = 0; k<expSize; k++){\n" + 
-			"        if(activeLines"+i+".indexOf(k) < 0){" +
-			"          continue;" +
-			"        }" +
-			"        index = queryArr"+i+"[k].indexOf(query"+i+");" +
-			"        if((index >= 0) && (clickinfo"+i+".innerHTML != '')){" +
-			"          clickinfo"+i+".innerHTML += '<span style=\"color:'+colors[k]+'\"> '+expNames"+i+"[k]+': </span>'+" +
-			"            getTime(timesArr"+i+"[k][index])+' <br>';\n" +
-		    "        }\n" +
-			"      }" +
-			"      clickinfo"+i+".innerHTML += '<br>';" +
+			"    refresh"+i+"();\n " +
+			"	 if(myPlot"+i+".data[expSize].visible == true){\n" +
+			"      visibleLines = false;\n" +
+			"	   for(k = 0; k<(expSize-1); k++){\n" + 
+			"        if(activeLines"+i+".indexOf(k) >= 0){\n" +
+			"          visibleLines = true;\n" +
+			"          break;\n" +
+			"        }\n" +
+		    "      }\n" +
+			"      if (visibleLines == true){" +
+			"        clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\">QUERY: '+query"+i+"+'</span></b><br>';\n" +
+			"	     for(k = 0; k<expSize; k++){\n" + 
+			"          if(activeLines"+i+".indexOf(k) < 0){\n" +
+			"            continue;\n" +
+			"          }\n" +
+			"          index = queryArr"+i+"[k].indexOf(query"+i+");" +
+			"          if((index >= 0) && (clickinfo"+i+".innerHTML != '')){\n" +
+			"            clickinfo"+i+".innerHTML += '<span style=\"color:'+colors[k]+'\"> '+expNames"+i+"[k]+': </span>'+" +
+			"              getTime(timesArr"+i+"[k][index])+' <br>';\n" +
+		    "          }\n" +
+			"        }\n" +
+			"        clickinfo"+i+".innerHTML += '<br>';\n" +
+			"      } else {\n" +
+			"        clickinfo"+i+".innerHTML = ' <br>';\n" +
+			"      }\n" +
+			"    } else {\n" +
+			"      clickinfo"+i+".innerHTML = ' <br>';\n" +
 			"    }" +
-
-
 			"  });\n" +
 
 			// event legend doubleclick
 			"  myPlot"+i+".on('plotly_legenddoubleclick', function(data){\n" + 
 			"	 number = data.curveNumber;\n" + 
-			"	 if((myPlot"+i+".data[number].visible == true) && " +
-			"        ((activeLines"+i+".length > 1) || ((activeLines"+i+".length == 1) && (myPlot"+i+".data[expSize].visible == true)))){\n" + 
-			"	   activeLines"+i+".clear();\n" + 
-			"	   activeLines"+i+".push(number);\n" + 
-			"      clickinfo"+i+".innerHTML = '';\n" +
+			"	 if(activeLines"+i+".indexOf(number) < 0){\n" + 
+			"		activeLines"+i+".push(number);\n" + 
 			"	 } else {\n" + 
-			"	   activeLines"+i+".clear();\n" + 
-			"	   for (i = 0; i < expSize; i++) {\n" + 
-			"        activeLines"+i+".push(i);\n" + 
-			"	   }\n" + 
-			
-			"	 if(myPlot"+i+".data[expSize].visible != false){\n" + 
-			"      clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\">QUERY: '+query"+i+"+'</span></b><br>';\n" +
-			"	   for(k = 0; k<expSize; k++){\n" + 
-			"        if(activeLines"+i+".indexOf(k) < 0){" +
-			"          continue;" +
-			"        }" +
-			"        index = queryArr"+i+"[k].indexOf(query"+i+");" +
-			"        if((index >= 0) && (clickinfo"+i+".innerHTML != ' ')){" +
-			"          clickinfo"+i+".innerHTML += '<span style=\"color:'+colors[k]+'\"> '+expNames"+i+"[k]+': </span>'+" +
-			"            getTime(timesArr"+i+"[k][index])+' <br>';\n" +
+			"	    activeLines"+i+".splice(activeLines"+i+".indexOf(number), 1);\n" + 
+			"	 }\n" + 
+			"    refresh"+i+"();\n " +
+			"	 if(myPlot"+i+".data[expSize].visible == true){\n" +
+			"      visibleLines = false;\n" +
+			"	   for(k = 0; k<(expSize-1); k++){\n" + 
+			"        if(activeLines"+i+".indexOf(k) >= 0){\n" +
+			"          visibleLines = true;\n" +
+			"          break;\n" +
 			"        }\n" +
-			"      }" +
-			"      clickinfo"+i+".innerHTML += '<br>';" +
-			"    } else {" +
-			"      clickinfo"+i+".innerHTML = '';\n" +
+		    "      }\n" +
+			"      if (visibleLines == true){" +
+			"        clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\">QUERY: '+query"+i+"+'</span></b><br>';\n" +
+			"	     for(k = 0; k<expSize; k++){\n" + 
+			"          if(activeLines"+i+".indexOf(k) < 0){\n" +
+			"            continue;\n" +
+			"          }\n" +
+			"          index = queryArr"+i+"[k].indexOf(query"+i+");" +
+			"          if((index >= 0) && (clickinfo"+i+".innerHTML != '')){\n" +
+			"            clickinfo"+i+".innerHTML += '<span style=\"color:'+colors[k]+'\"> '+expNames"+i+"[k]+': </span>'+" +
+			"              getTime(timesArr"+i+"[k][index])+' <br>';\n" +
+		    "          }\n" +
+			"        }\n" +
+			"        clickinfo"+i+".innerHTML += '<br>';\n" +
+			"      } else {\n" +
+			"        clickinfo"+i+".innerHTML = ' <br>';\n" +
+			"      }\n" +
+			"    } else {\n" +
+			"      clickinfo"+i+".innerHTML = ' <br>';\n" +
 			"    }" +
-			"    }\n" + 
+			"	 return false;\n" +
 			"  });" +
 
 			// clear array
@@ -886,7 +903,7 @@ public class ExperimentServer extends NanoHTTPD {
 			"  myPlot"+i+".on('plotly_click', function(data){\n" + 
 			"    len = data.points.length;\n" + 
 			"    tn = data.points[0].curveNumber;\n" + 
-			"    if ((len == 1) && (tn < expSize)) {\n" + 
+			"    if ((len == 1)) {\n" + 
 			"      pn = data.points[0].pointNumber;\n" +
 			"      query"+i+" = queryArr"+i+"[tn][pn];\n" +
 			"      clickinfo"+i+".innerHTML = '<b><span style=\"color:#FF0000\">QUERY: '+query"+i+"+'</span></b><br>';\n" +
@@ -942,7 +959,7 @@ public class ExperimentServer extends NanoHTTPD {
 			"  }\n" +
 			"  function refresh"+i+"() {\n" + 
 			"    minIndex = expSize-1;\n" +
-			"    if((myPlot"+i+".data[minIndex].visible == true) && (activeLines"+i+".length > 1)) {\n " +
+			"    if(activeLines"+i+".indexOf(minIndex) >= 0) {\n " +
 			"      visitedQueries=[];\n" +
 			"      queryResultArr=[];\n" +
 			"	   for(k = 0; k<minIndex; k++){\n" + 
@@ -965,61 +982,66 @@ public class ExperimentServer extends NanoHTTPD {
 		    "        }\n" +
 			"      }" +
 			"      queryResultArr.sort(custom_compare);\n" + 
-
-			
-			"      xArr=[];\n" +
-			"      yArr=[];\n" +
-			"      text=[];\n" +
+			"      xArrM=[];\n" +
+			"      yArrM=[];\n" +
+			"      textM=[];\n" +
 			"      queryNames=[];\n" +
 			"      queryTimes=[];\n" +
 			"      queryLength = queryResultArr.length;\n" +
 			"	   for(k = 0; k<queryLength; k++){\n" + 
-			"	       xArr.push(round(((k+1)*100.0)/queryLength));\n" +
-			"	       yArr.push(queryResultArr[k].time);\n" +
-			"	       text.push(getTime(queryResultArr[k].time));\n" +
+			"	       xArrM.push(round(((k+1)*100.0)/queryLength));\n" +
+			"	       yArrM.push(queryResultArr[k].time);\n" +
+			"	       textM.push(getTime(queryResultArr[k].time));\n" +
 			"		   queryNames.push(queryResultArr[k].query);\n" + 
 			"	       queryTimes.push(queryResultArr[k].time);\n" + 
 			"      }" +
-
-			// plot restyle
-			"      update = {x: [xArr], y: [yArr],\n"+
-			"      text: [text],\n" + 
-			"      visible: true,\n" +
-			"      hoverinfo: 'x+text'};" +
-			"	   Plotly.restyle('myDiv"+i+"', update, minIndex);\n" + 
+				   // plot restyle
+			"      if(myPlot"+i+".data[minIndex].visible == true) {\n" +
+			"        updateMin = {x: [xArrM], y: [yArrM],\n"+
+			"        text: [textM],\n" + 
+			"        visible: true,\n" +
+			"        hoverinfo: 'x+text'};" +
+			"	     Plotly.restyle('myDiv"+i+"', updateMin, [minIndex]);\n" + 
+			"      } else {\n" +
+			"        updateMin = {x: [xArrM], y: [yArrM],\n" +
+			"        text: [textM],\n" + 
+			"        visible: 'legendonly',\n" +
+			"        hoverinfo: 'x+text'};" +
+			"	     Plotly.restyle('myDiv"+i+"', updateMin, [minIndex]);\n" + 
+			"      }\n" +
 			"      queryArr"+i+"[minIndex] = queryNames;\n" +
 			"      timesArr"+i+"[minIndex] = queryTimes;\n" +
-			"    }\n" + 
-
-			"    if(myPlot"+i+".data[expSize].visible == true) {\n " +
-			"      xArr=[];\n" +
-			"      yArr=[];\n" +
-			"      text=[];\n" +
-			"      opacities=[];\n" +
-			"	   for(k = 0; k<expSize; k++){\n" + 
-			"        if(activeLines"+i+".indexOf(k) < 0){" +
-			"          continue;" +
-			"        }" +
-			"        index = queryArr"+i+"[k].indexOf(query"+i+");" +
-			"        if(index >= 0){" +
-			"	       xArr[k] = round(((index+1)*100.0)/(queryArr"+i+"[k].length));\n" +
-			"	       yArr[k] = timesArr"+i+"[k][index];\n" +
-			"	       text[k] = getTime(timesArr"+i+"[k][index]);\n" +
-			"          opacities.push(1);\n" +
-		    "        }\n" +
-			"      }" +
-
-			// plot restyle
-			"      update = {x: [xArr], y: [yArr],\n"+
-			"      text: [text],\n" + 
-			"      hoverinfo: 'x+text',\n" +
-			"      showlegend: false,\n" +
-			"      visible: true,\n" +
-			"      marker:{size:7, color: '#FF0000', opacity:[opacities]}};" +
-			"	   Plotly.restyle('myDiv"+i+"', update, expSize);\n" + 
 			"    }\n" +
 
-			"  }\n" +
+			"      if(myPlot"+i+".data[expSize].visible == true) {\n " +
+			"        xArrP=[];\n" +
+			"        yArrP=[];\n" +
+			"        textP=[];\n" +
+			"        opacitiesP=[];\n" +
+			"  	     for(k = 0; k<expSize; k++){\n" + 
+			"          if(activeLines"+i+".indexOf(k) < 0){" +
+			"            continue;" +
+			"          }" +
+			"            index = queryArr"+i+"[k].indexOf(query"+i+");" +
+			"          if(index >= 0){" +
+			"  	         xArrP[k] = round(((index+1)*100.0)/(queryArr"+i+"[k].length));\n" +
+			"	         yArrP[k] = timesArr"+i+"[k][index];\n" +
+			"	         textP[k] = getTime(timesArr"+i+"[k][index]);\n" +
+			"            opacitiesP.push(1);\n" +
+		    "          }\n" +
+			"        }" +
+
+			// plot restyle
+			"        updatePoints = {x: [xArrP], y: [yArrP],\n"+
+			"        text: [textP],\n" + 
+			"        hoverinfo: 'x+text',\n" +
+			"        showlegend: false,\n" +
+			"        visible: true,\n" +
+			"        marker:{size:7, color: '#FF0000', opacity:[opacitiesP]}};" +
+			"	     Plotly.restyle('myDiv"+i+"', updatePoints, [expSize]);\n" + 
+			"      }\n" +
+			"  }\n" + 
+
 			
 			"  function custom_compare (a,b) {\n" + 
 			"    return a.time - b.time;\n" + 
