@@ -46,7 +46,6 @@ import java.util.regex.Pattern;
 
 import javax.annotation.concurrent.GuardedBy;
 
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,7 +125,6 @@ public class ExperimentServer extends NanoHTTPD {
 	private static final String WS_INPUT_ = "input";
 	private static final String WS_EXPS_ = "experiments";
 	private static final String WS_RESULTS_ = "results";
-	private static final String WS_ONTOLOGIES_ = "ontologies";
 	private static final String WS_PLOTS_ = "plots";
 	private static final String WS_RESULTS_ARCHIVE_ = "results.zip";
 
