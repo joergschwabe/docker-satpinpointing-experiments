@@ -140,7 +140,6 @@ public class ExperimentServer extends NanoHTTPD {
 		Utils.cleanIfNotDir(this.inputDir_);
 		this.expsDir_ = new File(workspace, WS_EXPS_);
 		this.resultsDir_ = new File(workspace, WS_RESULTS_);
-		this.ontologiesDir_ = new File(workspace, WS_ONTOLOGIES_);
 		this.plotsDir_ = new File(resultsDir_, WS_PLOTS_);
 		this.resultsFile_ = new File(workspace, WS_RESULTS_ARCHIVE_);
 		this.command_ = command;
@@ -153,7 +152,6 @@ public class ExperimentServer extends NanoHTTPD {
 	private final File inputDir_;
 	private final File expsDir_;
 	private final File resultsDir_;
-	private final File ontologiesDir_;
 	private final File plotsDir_;
 	private final File resultsFile_;
 	private final String[] command_;
@@ -619,6 +617,7 @@ public class ExperimentServer extends NanoHTTPD {
 				return name.endsWith(".csv");
 			}
 		});
+		ArrayList<String> ontologiesList = new ArrayList<String>();
 		Arrays.sort(fileNames);
 		for (final String fileName : fileNames) {
 			resultList.append("<li><a href='/results/");
@@ -626,6 +625,13 @@ public class ExperimentServer extends NanoHTTPD {
 			resultList.append("'>");
 			resultList.append(fileName);
 			resultList.append("</a></li>\n");
+
+			String[] fileNameSplit = fileName.split("\\.");
+			String ontologieName = fileNameSplit[1];
+			if(!ontologiesList.contains(ontologieName)) {
+				ontologiesList.add(ontologieName);
+			}
+
 		}
 		resultList.append("</ul>");
 
@@ -640,8 +646,7 @@ public class ExperimentServer extends NanoHTTPD {
 		// contains the javascript code
 		StringBuilder plotString = new StringBuilder();
 		int i=0;
-		for (final String ontologieFileName : ontologiesDir_.list()) {
-			String ontologieName = FilenameUtils.removeExtension(ontologieFileName);
+		for (final String ontologieName : ontologiesList) {
 			
 			// contains all sorted results with name of queries and times
 			ArrayList<ArrayList<QueryResult>> queryResults_sort = new ArrayList<ArrayList<QueryResult>>();
