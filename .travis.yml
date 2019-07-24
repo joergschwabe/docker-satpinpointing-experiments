@@ -3,7 +3,7 @@ git:
   depth: 3
 matrix:
   include:
-  - jdk: oraclejdk8
+  - jdk: openjdk10
     env: DEPLOY=true
 install: mvn install -DskipTests=true
 script: mvn test -Dassembly.skipAssembly=true -B
