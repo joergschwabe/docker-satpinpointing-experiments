@@ -935,9 +935,9 @@ public class ExperimentServer extends NanoHTTPD {
 			"      hoverinfo: 'x+text',\n" +
 			"      showlegend: false,\n" +
 			"      visible: true,\n" +
-			"      marker:{size:7, color: '#FF0000', opacity:[opacities]}};" +
+			"      marker:{size:7, color: '#FF0000', opacity:opacities}};\n" +
 			"	   Plotly.restyle('myDiv"+i+"', update, expSize);\n" +
-			"      clickinfo"+i+".innerHTML += '<br>';" +
+			"      clickinfo"+i+".innerHTML += '<br>';\n" +
 			"    } else {\n" + 
 			"      clickinfo"+i+".innerHTML = '';\n" + 
 			"    }\n" + 
@@ -1040,7 +1040,7 @@ public class ExperimentServer extends NanoHTTPD {
 			"        hoverinfo: 'x+text',\n" +
 			"        showlegend: false,\n" +
 			"        visible: true,\n" +
-			"        marker:{size:7, color: '#FF0000', opacity:[opacitiesP]}};" +
+			"        marker:{size:7, color: '#FF0000', opacity:opacitiesP}};" +
 			"	     Plotly.restyle('myDiv"+i+"', updatePoints, [expSize]);\n" + 
 			"      }\n" +
 			"  }\n" + 
