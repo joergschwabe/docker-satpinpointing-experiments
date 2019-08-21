@@ -718,15 +718,16 @@ public class ExperimentServer extends NanoHTTPD {
 					"<div id=\"hoverinfo"+i+"\" style=\"margin-left:80px;\"></div>\n"+
 					"<div id=\"test"+i+"\" style=\"margin-left:80px;\"></div>\n"+
 					"<script>\n" + 
-					"    var colors = ['#426CDA','#53CE40','#FFC100','#000000'],\n");			
-
+					"    var allColors = ['#426CDA','#53CE40','#FFC100','#8B008B','#D2691E','#87CEFA','#008000','#FF00FF','#FF8C00','#A9A9A9'],\n"+
+					"    expSize = "+expSize+",\n" +
 			// translate objects from java to javascript
-			plotString.append(
-					"  query"+i+",\n" +
-					"  activeLines"+i+" = [],\n" + 
-					"  queryArr"+i+" = [],\n" + 
-					"  timesArr"+i+" = [],\n" + 
-					"  expNames"+i+" = [];\n");
+					"    query"+i+",\n" +
+					"    activeLines"+i+" = [],\n" + 
+					"    queryArr"+i+" = [],\n" + 
+					"    timesArr"+i+" = [],\n" + 
+					"    expNames"+i+" = [];\n" +
+					"    var colors = allColors.slice(0,expSize);\n" +
+					"    colors[(expSize-1)] = '#000000';\n");
 			for(int k=0; k<expSize; k++) {
 				ArrayList<String> queryNames = new ArrayList<String>();
 				ArrayList<Double> queryTimes = new ArrayList<Double>();
@@ -785,12 +786,12 @@ public class ExperimentServer extends NanoHTTPD {
 			
 			// plot
 			plotString.append(
+			"  refresh"+i+"();\n" +
 			"  Plotly.newPlot('myDiv"+i+"', traces, layout);\n" +
 			"  myPlot"+i+" = document.getElementById('myDiv"+i+"');\n");
 
 			// event legendclick
 			plotString.append(
-			"  expSize = "+expSize+";\n" +
 			"  myPlot"+i+".on('plotly_legendclick', function(data){\n" + 
 			"	 number = data.curveNumber;\n" + 
 			"	 if(activeLines"+i+".indexOf(number) < 0){\n" + 
@@ -964,26 +965,62 @@ public class ExperimentServer extends NanoHTTPD {
 			"    minIndex = expSize-1;\n" +
 			"    if(activeLines"+i+".indexOf(minIndex) >= 0) {\n " +
 			"      visitedQueries=[];\n" +
-			"      queryResultArr=[];\n" +
+			"      j=0;\n" +
 			"	   for(k = 0; k<minIndex; k++){\n" + 
 			"        if(activeLines"+i+".indexOf(k) < 0){" +
 			"          continue;" +
 			"        }" +
-			"	     for(l = 0; l<(queryArr"+i+"[k].length); l++){\n" + 
-			"          query_ = queryArr"+i+"[k][l];\n" +
-			"          index = visitedQueries.indexOf(query_);\n" +
-			"          if(index < 0){\n" +
-			"            visitedQueries.push(query_);\n" +
-			"            queryResultArr.push({query : query_, time: timesArr"+i+"[k][l]});\n" +
-		    "          } else {\n" +
-			"            time_ = queryResultArr[index].time;\n" +
-		    "            newTime = timesArr"+i+"[k][l];\n" +
-		    "            if(time_ > newTime) {" +
-		    "              queryResultArr[index].time = newTime;\n" +
-		    "            }\n" +
-		    "          }\n" +
+			"        if(j < 1){\n" +
+			"          visitedQueries = queryArr"+i+"[k].slice();\n" +
+		    "        }else{\n" +
+		    "          visitedQueries = visitedQueries.filter(function(n) {\n" + 
+		    "		     return queryArr"+i+"[k].indexOf(n) !== -1;\n" + 
+		    "		   });\n" +
 		    "        }\n" +
-			"      }" +
+		    "        j++;\n" +
+		    "      }" +
+			"      queryResultArr=[];\n" +
+			"      queryResultVisited=[];\n" +
+			"	   for(k = 0; k<minIndex; k++){\n" + 
+			"        if(activeLines"+i+".indexOf(k) < 0){" +
+			"          continue;" +
+			"        }" +
+			"	     for(l = 0; l<visitedQueries; l++){\n" + 
+			"          query_ = visitedQueries[l];\n" +
+			"          if(index < 0){\n" + 
+			"            queryResultVisited.push(query_);\n" + 
+			"            queryResultArr.push({query : query_, time: timesArr"+i+"[k][l]});\n" + 
+			"          } else {\n" +
+			"            index = queryResultVisited.indexOf(query_);\n" +
+			"            time_ = queryResultArr[index].time;\n" +
+			"            index = queryArr"+i+"[k].indexOf(query_);\n" +
+			"            newTime = timesArr"+i+"[k][index];\n" +
+			"            if(time_ > newTime) {" +
+			"              queryResultArr[index].time = newTime;\n" +
+			"            }\n" +
+			"          }\n" +
+			"        }\n" +
+			"      }\n" + 
+			
+//			"	   for(k = 0; k<minIndex; k++){\n" + 
+//			"        if(activeLines"+i+".indexOf(k) < 0){" +
+//			"          continue;" +
+//			"        }" +
+//			"	     for(l = 0; l<(queryArr"+i+"[k].length); l++){\n" + 
+//			"          query_ = queryArr"+i+"[k][l];\n" +
+//			"          index = visitedQueries.indexOf(query_);\n" +
+//			"          if(index < 0){\n" +
+//			"            visitedQueries.push(query_);\n" +
+//			"            queryResultArr.push({query : query_, time: timesArr"+i+"[k][l]});\n" +
+//		    "          } else {\n" +
+//			"            time_ = queryResultArr[index].time;\n" +
+//		    "            newTime = timesArr"+i+"[k][l];\n" +
+//		    "            if(time_ > newTime) {" +
+//		    "              queryResultArr[index].time = newTime;\n" +
+//		    "            }\n" +
+//		    "          }\n" +
+//		    "        }\n" +
+//			"      }" +
 			"      queryResultArr.sort(custom_compare);\n" + 
 			"      xArrM=[];\n" +
 			"      yArrM=[];\n" +
