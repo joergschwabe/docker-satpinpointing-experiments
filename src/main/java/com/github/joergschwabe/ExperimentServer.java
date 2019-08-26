@@ -786,9 +786,9 @@ public class ExperimentServer extends NanoHTTPD {
 			
 			// plot
 			plotString.append(
-			"  refresh"+i+"();\n" +
 			"  Plotly.newPlot('myDiv"+i+"', traces, layout);\n" +
-			"  myPlot"+i+" = document.getElementById('myDiv"+i+"');\n");
+			"  myPlot"+i+" = document.getElementById('myDiv"+i+"');\n" +
+			"  refresh"+i+"();\n");
 
 			// event legendclick
 			plotString.append(
@@ -962,79 +962,59 @@ public class ExperimentServer extends NanoHTTPD {
 			"	 return time < 60 ? round(time)+' s' : round(time/60)+' min';\n" + 
 			"  }\n" +
 			"  function refresh"+i+"() {\n" + 
-			"    minIndex = expSize-1;\n" +
+			"    minIndex = expSize-1;\n" +			
 			"    if(activeLines"+i+".indexOf(minIndex) >= 0) {\n " +
 			"      visitedQueries=[];\n" +
-			"      j=0;\n" +
+
 			"	   for(k = 0; k<minIndex; k++){\n" + 
-			"        if(activeLines"+i+".indexOf(k) < 0){" +
-			"          continue;" +
-			"        }" +
-			"        if(j < 1){\n" +
+			"        if(activeLines"+i+".indexOf(k) < 0){\n" +
+			"          continue;\n" +
+			"        }\n" +
+			"        if(visitedQueries.length == 0){\n" +
 			"          visitedQueries = queryArr"+i+"[k].slice();\n" +
 		    "        }else{\n" +
 		    "          visitedQueries = visitedQueries.filter(function(n) {\n" + 
 		    "		     return queryArr"+i+"[k].indexOf(n) !== -1;\n" + 
 		    "		   });\n" +
 		    "        }\n" +
-		    "        j++;\n" +
 		    "      }" +
-			"      queryResultArr=[];\n" +
-			"      queryResultVisited=[];\n" +
+
+			"      visitedResultQueries=[];\n" +
+		    "      queryResultArr=[];\n" +
 			"	   for(k = 0; k<minIndex; k++){\n" + 
-			"        if(activeLines"+i+".indexOf(k) < 0){" +
-			"          continue;" +
-			"        }" +
-			"	     for(l = 0; l<visitedQueries; l++){\n" + 
-			"          query_ = visitedQueries[l];\n" +
-			"          if(index < 0){\n" + 
-			"            queryResultVisited.push(query_);\n" + 
-			"            queryResultArr.push({query : query_, time: timesArr"+i+"[k][l]});\n" + 
-			"          } else {\n" +
-			"            index = queryResultVisited.indexOf(query_);\n" +
-			"            time_ = queryResultArr[index].time;\n" +
-			"            index = queryArr"+i+"[k].indexOf(query_);\n" +
-			"            newTime = timesArr"+i+"[k][index];\n" +
-			"            if(time_ > newTime) {" +
-			"              queryResultArr[index].time = newTime;\n" +
-			"            }\n" +
-			"          }\n" +
+			"        if(activeLines"+i+".indexOf(k) < 0){\n" +
+			"          continue;\n" +
 			"        }\n" +
-			"      }\n" + 
-			
-//			"	   for(k = 0; k<minIndex; k++){\n" + 
-//			"        if(activeLines"+i+".indexOf(k) < 0){" +
-//			"          continue;" +
-//			"        }" +
-//			"	     for(l = 0; l<(queryArr"+i+"[k].length); l++){\n" + 
-//			"          query_ = queryArr"+i+"[k][l];\n" +
-//			"          index = visitedQueries.indexOf(query_);\n" +
-//			"          if(index < 0){\n" +
-//			"            visitedQueries.push(query_);\n" +
-//			"            queryResultArr.push({query : query_, time: timesArr"+i+"[k][l]});\n" +
-//		    "          } else {\n" +
-//			"            time_ = queryResultArr[index].time;\n" +
-//		    "            newTime = timesArr"+i+"[k][l];\n" +
-//		    "            if(time_ > newTime) {" +
-//		    "              queryResultArr[index].time = newTime;\n" +
-//		    "            }\n" +
-//		    "          }\n" +
-//		    "        }\n" +
-//			"      }" +
+			"	     for(l = 0; l<(visitedQueries.length); l++){\n" + 
+			"          query_ = visitedQueries[l];\n" +
+			"          visitedIndex = visitedResultQueries.indexOf(query_);\n" +
+			"          queryIndex = queryArr"+i+"[k].indexOf(query_);\n" +
+			"          if(visitedIndex < 0){\n" +
+			"            visitedResultQueries.push(query_);\n" +
+			"            queryResultArr.push({query : query_, time: timesArr"+i+"[k][queryIndex]});\n" +
+		    "          } else {\n" +
+			"            time_ = queryResultArr[visitedIndex].time;\n" +
+		    "            newTime = timesArr"+i+"[k][queryIndex];\n" +
+		    "            if(time_ > newTime) {\n" +
+		    "              queryResultArr[visitedIndex].time = newTime;\n" +
+		    "            }\n" +
+		    "          }\n" +
+		    "        }\n" +
+			"      }" +
 			"      queryResultArr.sort(custom_compare);\n" + 
 			"      xArrM=[];\n" +
 			"      yArrM=[];\n" +
 			"      textM=[];\n" +
 			"      queryNames=[];\n" +
 			"      queryTimes=[];\n" +
-			"      queryLength = queryResultArr.length;\n" +
+			"      queryLength = visitedResultQueries.length;\n" +
 			"	   for(k = 0; k<queryLength; k++){\n" + 
 			"	       xArrM.push(round(((k+1)*100.0)/queryLength));\n" +
 			"	       yArrM.push(queryResultArr[k].time);\n" +
 			"	       textM.push(getTime(queryResultArr[k].time));\n" +
 			"		   queryNames.push(queryResultArr[k].query);\n" + 
 			"	       queryTimes.push(queryResultArr[k].time);\n" + 
-			"      }" +
+			"      }\n" +
 				   // plot restyle
 			"      if(myPlot"+i+".data[minIndex].visible == true) {\n" +
 			"        updateMin = {x: [xArrM], y: [yArrM],\n"+
@@ -1061,7 +1041,7 @@ public class ExperimentServer extends NanoHTTPD {
 			"  	     for(k = 0; k<expSize; k++){\n" + 
 			"          if(activeLines"+i+".indexOf(k) < 0){" +
 			"            continue;" +
-			"          }" +
+			"          }\n" +
 			"            index = queryArr"+i+"[k].indexOf(query"+i+");" +
 			"          if(index >= 0){" +
 			"  	         xArrP[k] = round(((index+1)*100.0)/(queryArr"+i+"[k].length));\n" +
@@ -1069,7 +1049,7 @@ public class ExperimentServer extends NanoHTTPD {
 			"	         textP[k] = getTime(timesArr"+i+"[k][index]);\n" +
 			"            opacitiesP.push(1);\n" +
 		    "          }\n" +
-			"        }" +
+			"        }\n" +
 
 			// plot restyle
 			"        updatePoints = {x: [xArrP], y: [yArrP],\n"+
@@ -1082,7 +1062,6 @@ public class ExperimentServer extends NanoHTTPD {
 			"      }\n" +
 			"  }\n" + 
 
-			
 			"  function custom_compare (a,b) {\n" + 
 			"    return a.time - b.time;\n" + 
 			"  }\n" + 
