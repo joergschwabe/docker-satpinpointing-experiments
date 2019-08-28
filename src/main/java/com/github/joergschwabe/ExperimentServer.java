@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.annotation.concurrent.GuardedBy;
 
@@ -647,10 +648,8 @@ public class ExperimentServer extends NanoHTTPD {
 		for (final String ontologieName : ontologiesList) {
 			
 			// contains all sorted results with name of queries and times
-			ArrayList<ArrayList<QueryResult>> queryResults_sort = new ArrayList<ArrayList<QueryResult>>();
+			ArrayList<ArrayList<QueryResult>> queryResults_all = new ArrayList<ArrayList<QueryResult>>();
 			ArrayList<String> expNames = new ArrayList<String>();
-			ArrayList<String> minQueryNames = new ArrayList<String>();
-			ArrayList<Double> minQueryTimes = new ArrayList<Double>();
 			for(final File file : files) {
 				String fileName = file.getName();
 				String[] fileNameSplit = fileName.split("\\.");
@@ -658,7 +657,7 @@ public class ExperimentServer extends NanoHTTPD {
 					continue;
 				}
 				
-				ArrayList<QueryResult> queryResult = new ArrayList<QueryResult>();
+				ArrayList<QueryResult> queryResult_all = new ArrayList<QueryResult>();
 				expNames.add(fileNameSplit[2]);
 				String[] input = null;
 				String line;
@@ -682,8 +681,7 @@ public class ExperimentServer extends NanoHTTPD {
 		                input = line.split(",");
 		                double time = Double.valueOf(input[timeIndex])/1000;
 						QueryResult qr = new QueryResult(input[nameIndex],time);
-						queryResult.add(qr);
-						computeMinimum(minQueryNames, minQueryTimes, qr);
+						queryResult_all.add(qr);
 					}
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
@@ -698,18 +696,19 @@ public class ExperimentServer extends NanoHTTPD {
 						}
 					}
 				}
-				queryResult.sort(Comparator.comparing((QueryResult q) -> q.time));
-				queryResults_sort.add(queryResult);
+				queryResults_all.add(queryResult_all);
 			}
 			
-			expNames.add("minimum");
 			int expSize = expNames.size();
-			ArrayList<QueryResult> minQueryResult = new ArrayList<QueryResult>();
-			for(int k=0; k<minQueryNames.size(); k++) {
-				minQueryResult.add(new QueryResult(minQueryNames.get(k), minQueryTimes.get(k)));
-			}
-			minQueryResult.sort(Comparator.comparing((QueryResult q) -> q.time));
-			queryResults_sort.add(minQueryResult);
+			int minIndex = queryResults_all.stream().min(Comparator.comparing(list -> list.size())).get().size();
+			ArrayList<ArrayList<QueryResult>> queryResults_min = minimizeQueryResults(queryResults_all, minIndex);
+			
+			expNames.add("minimum");
+			expSize++;
+			addMinimum(minIndex, queryResults_min);
+
+			// sort
+			ArrayList<ArrayList<QueryResult>> queryResults_sort = sortQueryResults(queryResults_min);
 
 			// start javascript
 			plotString.append(
@@ -787,8 +786,9 @@ public class ExperimentServer extends NanoHTTPD {
 			// plot
 			plotString.append(
 			"  Plotly.newPlot('myDiv"+i+"', traces, layout);\n" +
-			"  myPlot"+i+" = document.getElementById('myDiv"+i+"');\n" +
-			"  refresh"+i+"();\n");
+			"  myPlot"+i+" = document.getElementById('myDiv"+i+"');\n"
+//			"  refresh"+i+"();\n"
+			);
 
 			// event legendclick
 			plotString.append(
@@ -1072,16 +1072,40 @@ public class ExperimentServer extends NanoHTTPD {
 		return newFixedLengthResponse(String.format(TEMPLATE_RESULTS_, plotString.toString(), resultList.toString()));
 	}
 
-	private void computeMinimum(ArrayList<String> minQueryNames, ArrayList<Double> minQueryTimes, QueryResult qr) {
-		if(minQueryNames.contains(qr.query)) {
-			int index = minQueryNames.indexOf(qr.query);
-			if(minQueryTimes.get(index) > qr.time) {
-				minQueryTimes.set(index, qr.time);
-			}
-		} else {
-			minQueryNames.add(qr.query);
-			minQueryTimes.add(qr.time);
+	
+	private static ArrayList<ArrayList<QueryResult>> sortQueryResults(ArrayList<ArrayList<QueryResult>> queryResults_min) {
+		ArrayList<ArrayList<QueryResult>> queryResults_sort = new ArrayList<ArrayList<QueryResult>>();
+		for(int k=0; k<queryResults_min.size(); k++) {
+			ArrayList<QueryResult> queryResult = queryResults_min.get(k);
+			queryResult.sort(Comparator.comparing((QueryResult q) -> q.time));
+			queryResults_sort.add(queryResult);
 		}
+		return queryResults_sort;
+	}
+
+	private static void addMinimum(int minIndex, ArrayList<ArrayList<QueryResult>> queryResults) {
+		ArrayList<QueryResult> minQueryResult = new ArrayList<QueryResult>();
+		int k = 0;
+		while(k<minIndex) {
+			ArrayList<QueryResult> queryResult = getQueryResult(queryResults, k);
+			minQueryResult.add(queryResult.stream().min(Comparator.comparing((QueryResult q) -> q.time)).get());
+			k++;
+		}
+		queryResults.add(minQueryResult);
+	}
+	
+	private static ArrayList<QueryResult> getQueryResult(ArrayList<ArrayList<QueryResult>> queryResults, int k) {
+		return new ArrayList<QueryResult>(queryResults.stream().map(list -> list.get(k)).collect(Collectors.toList()));
+	}
+
+	private static ArrayList<ArrayList<QueryResult>> minimizeQueryResults(ArrayList<ArrayList<QueryResult>> queryResults_all,
+			int minIndex) {
+		ArrayList<ArrayList<QueryResult>> queryResults = new ArrayList<ArrayList<QueryResult>>();
+		for(int k = 0; k<queryResults_all.size(); k++) {
+			ArrayList<QueryResult> queryResult = new ArrayList<QueryResult>(queryResults_all.get(k).subList(0, minIndex));
+			queryResults.add(queryResult);
+		}
+		return queryResults;
 	}
 
 	private void addToPlot(String expName, ArrayList<QueryResult> queryResult, StringBuilder plotString, int k) {
