@@ -1,0 +1,17 @@
+#!/bin/bash
+
+TIMEOUT=$1
+shift
+GLOBAL_TIMEOUT=$1
+shift
+QUERY_FILE=$1
+shift
+ENCODING_DIR=$1
+shift
+SCRIPTS_DIR=$1
+shift
+OUTPUT_DIR=$1
+shift
+
+$SCRIPTS_DIR/run_SATPin_experiments.sh ./$SATPIN_EXE $TIMEOUT $GLOBAL_TIMEOUT $QUERY_FILE $ENCODING_DIR $OUTPUT_DIR
+

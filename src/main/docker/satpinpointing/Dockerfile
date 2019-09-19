@@ -1,7 +1,8 @@
 FROM openjdk:8u151-jdk
 
 ENV CLASSPATH 'maven/*'
-ENV EL2MCS_DIR el2mcs
+ENV EL2MCS_DIR_REPAIR el2mcs_repair
+ENV EL2MCS_DIR_JUSTIFICATION el2mcs_justification
 ENV EL2MUS_DIR el2mus
 ENV SATPIN_EXE SATPin
 

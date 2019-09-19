@@ -1,0 +1,18 @@
+
+# usage: gen-sat-enc <name> <path-to-ontolgy> <output_path> <path-to-tools>
+# example: ./gen-sat-enc med ../ontologies/med_ont.krss ../med_instances ../tools 
+
+ONTNAME=$1
+ONTPATH=$2
+OUTPATH=$3
+TOOLPATH=$4
+
+mkdir -p $OUTPATH
+
+PREFIX=$OUTPATH/$ONTNAME
+
+./$TOOLPATH/el2sat_all -i=$ONTPATH -a=$PREFIX.assumptions -z=$PREFIX.zzz -p=$PREFIX.ppp -o=$PREFIX.cnf -h=$PREFIX.h -g
+
+sort -g -u $PREFIX.ppp > $PREFIX.ppp.g.u
+
+

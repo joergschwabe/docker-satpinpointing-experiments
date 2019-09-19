@@ -1,0 +1,95 @@
+
+#################################################
+# create-wcnf                                   #
+# author: Carlos Mencia                         #     
+# contributors: Joao Marques-Silva, Fareed Arif #
+#################################################
+
+NAME=$1
+QUERYPATH=$3
+INPATH=$2
+OUTPATH=$4
+TOOLPATH=$5
+OPT=$6
+
+
+if [[ "$#" -ne 6 || ("$OPT" != "no-opt" && "$OPT" != "coi" && "$OPT" != "x2") ]]; then
+	echo "usage: ./create-wcnf <name> <classification-dir> <query-file> <output-dir> <tools-dir> <opt>"
+	echo "   where <opt> = no-opt | coi | x2"
+	exit
+fi
+
+
+AUX="${INPATH: -1}"
+if [[ "$AUX" = "/" ]]; then
+	INPATH="${INPATH%?}"
+fi
+
+AUX="${OUTPATH: -1}"
+if [[ "$AUX" = "/" ]]; then
+	OUTPATH="${OUTPATH%?}"
+fi
+
+AUX="${TOOLPATH: -1}"
+if [[ "$AUX" = "/" ]]; then
+	TOOLPATH="${TOOLPATH%?}"
+fi
+
+
+mkdir -p $OUTPATH
+
+if [[ "$OPT" = "x2" ]]; then
+
+	$TOOLPATH/pinp-coi $NAME $QUERYPATH $INPATH $OUTPATH $TOOLPATH
+
+      cut -f 1 -d " " $QUERYPATH |
+      while read line;
+      do
+
+     	# extract subontology
+     	 $TOOLPATH/extract-module.py $INPATH/$NAME.zzz.gci $INPATH/$NAME.zzz.ri $OUTPATH/$NAME.$line.module.axioms $NAME.$line $OUTPATH
+
+	# classify subontology
+      	$TOOLPATH/gen-sat-enc $NAME.$line $OUTPATH/$NAME.$line.krss $OUTPATH $TOOLPATH
+	
+	# get new query index
+	$TOOLPATH/match-queries $line $INPATH/$NAME.zzz $NAME $OUTPATH
+             
+
+        # extract coi module for the query
+	$TOOLPATH/pinp-coi $NAME.$line $OUTPATH/$NAME.$line.query $OUTPATH $OUTPATH  $TOOLPATH
+
+       # get the formula
+        cut -f 1 -d " " $OUTPATH/$NAME.$line.query |
+	while read lq;
+	do
+	$TOOLPATH/gen-wcnf.py $NAME $OUTPATH/$NAME.$line.$lq.coi.cnf $OUTPATH/$NAME.$line.$lq.module.axioms  $lq "coi" > $OUTPATH/$NAME.$line.x2.wcnf
+	done
+
+
+    done      
+   
+    rm $OUTPATH/*.coi.assert $OUTPATH/*.q.o $OUTPATH/*.q.t $OUTPATH/*.h $OUTPATH/*.ppp $OUTPATH/*.assumptions $OUTPATH/*.cnf $OUTPATH/*.ppp.g.u $OUTPATH/*.query $OUTPATH/*.zzz* $OUTPATH/*.module.axioms
+      
+
+elif [[ "$OPT" = "coi" ]]; then
+
+	$TOOLPATH/pinp-coi $NAME $QUERYPATH $INPATH $OUTPATH $TOOLPATH
+
+	cut -f 1 -d " " $QUERYPATH | 
+  	while read line; 
+  	do 
+		$TOOLPATH/gen-wcnf.py $NAME $OUTPATH/$NAME.$line.coi.cnf $OUTPATH/$NAME.$line.module.axioms $line coi > $OUTPATH/$NAME.$line.coi.wcnf
+ 	done
+
+       rm $OUTPATH/*.coi.assert $OUTPATH/*.coi.cnf $OUTPATH/*.q.o $OUTPATH/*.q.t $OUTPATH/*.mod.cnf
+
+elif [[ "$OPT" = "no-opt" ]]; then
+	cut -f 1 -d " " $QUERYPATH |
+	while read line;
+	do
+		$TOOLPATH/gen-wcnf.py $NAME $INPATH/$NAME.cnf $INPATH/$NAME.ppp.g.u $line "no-opt" > $OUTPATH/$NAME.$line.wcnf
+	done
+fi
+
+

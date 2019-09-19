@@ -1,0 +1,6 @@
+1 (implies Endocarditis (and Inflammation (some hasLoc Endocardium)) )
+2 (implies Inflammation (and Disease (some actsOn Tissue)) )
+3 (implies Endocardium (and Tissue (some contIn HeartValve)) )
+4 (implies HeartValve (some contIn Heart) )
+5 (implies HeartDisease (and Disease (some hasLoc Heart)) )
+5 (implies (and Disease (some hasLoc Heart)) HeartDisease )
