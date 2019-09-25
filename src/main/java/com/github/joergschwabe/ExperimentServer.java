@@ -552,7 +552,7 @@ public class ExperimentServer extends NanoHTTPD {
 				tools.append("<br/><input type='checkbox' name='");
 				tools.append(expFile.getName());
 				tools.append("'");
-				tools.append(" checked");
+//				tools.append(" checked");
 				tools.append(" value='");
 				tools.append(expFile.getName());
 				tools.append("'><label for='");
