@@ -645,6 +645,7 @@ public class ExperimentServer extends NanoHTTPD {
 		// contains the javascript code
 		StringBuilder plotString = new StringBuilder();
 		int i=0;
+		boolean timeComp = false;
 		for (final String ontologieName : ontologiesList) {
 			
 			// contains all sorted results with name of queries and times
@@ -656,13 +657,27 @@ public class ExperimentServer extends NanoHTTPD {
 				if(!fileNameSplit[1].equals(ontologieName)) {
 					continue;
 				}
+				timeComp = fileNameSplit[2].contains("_Times");
 				
 				ArrayList<QueryResult> queryResult_all = new ArrayList<QueryResult>();
-				expNames.add(fileNameSplit[2]);
+				ArrayList<QueryResult> queryResult_all_satSolver = new ArrayList<QueryResult>();
+				ArrayList<QueryResult> queryResult_all_justComp = new ArrayList<QueryResult>();
+				ArrayList<QueryResult> queryResult_all_cycleComp = new ArrayList<QueryResult>();
+				if(timeComp) {
+					expNames.add(fileNameSplit[2]+"_total");
+					expNames.add(fileNameSplit[2]+"_SatSolver");
+					expNames.add(fileNameSplit[2]+"_JustComp");
+					expNames.add(fileNameSplit[2]+"_CycleComp");					
+				} else {
+					expNames.add(fileNameSplit[2]);
+				}
 				String[] input = null;
 				String line;
 				int nameIndex = 0;
 				int timeIndex = 0;
+				int timeSatSolverIndex = 0;
+				int timeJustCompIndex = 0;
+				int timeCycleCompIndex = 0;
 				try {
 					// read data from csv files
 					br = new BufferedReader(new FileReader(file));
@@ -675,6 +690,17 @@ public class ExperimentServer extends NanoHTTPD {
 							if(input[j].equals("time")) {
 								timeIndex = j;
 							}
+							if(timeComp) {
+								if(input[j].equals("timeSatSolver")) {
+									timeSatSolverIndex = j;
+								}
+								if(input[j].equals("timeJustComp")) {
+									timeJustCompIndex = j;
+								}
+								if(input[j].equals("timeCycleComp")) {
+									timeCycleCompIndex = j;
+								}
+							}
 						}
 					}
 					while((line=br.readLine()) != null) {
@@ -682,6 +708,17 @@ public class ExperimentServer extends NanoHTTPD {
 		                double time = Double.valueOf(input[timeIndex])/1000;
 						QueryResult qr = new QueryResult(input[nameIndex],time);
 						queryResult_all.add(qr);
+		                if(timeComp) {
+		                	double timeSatSolver = Double.valueOf(input[timeSatSolverIndex])/1000;
+							QueryResult qrSatSolver = new QueryResult(input[nameIndex],timeSatSolver);
+							queryResult_all_satSolver.add(qrSatSolver);
+			                double timeJustComp = Double.valueOf(input[timeJustCompIndex])/1000;
+							QueryResult qrJustComp = new QueryResult(input[nameIndex],timeJustComp);
+							queryResult_all_justComp.add(qrJustComp);
+			                double timeCycleComp = Double.valueOf(input[timeCycleCompIndex])/1000;
+							QueryResult qrCycleComp = new QueryResult(input[nameIndex],timeCycleComp);
+							queryResult_all_cycleComp.add(qrCycleComp);
+		                }
 					}
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
@@ -697,16 +734,23 @@ public class ExperimentServer extends NanoHTTPD {
 					}
 				}
 				queryResults_all.add(queryResult_all);
+				if(timeComp) {
+					queryResults_all.add(queryResult_all_satSolver);
+					queryResults_all.add(queryResult_all_justComp);
+					queryResults_all.add(queryResult_all_cycleComp);
+				}
 			}
 			
 			int expSize = expNames.size();
 			int minIndex = queryResults_all.stream().min(Comparator.comparing(list -> list.size())).get().size();
 			ArrayList<ArrayList<QueryResult>> queryResults_min = minimizeQueryResults(queryResults_all, minIndex);
 			
-			expNames.add("minimum");
-			expSize++;
-			addMinimum(minIndex, queryResults_min);
-
+			if(!timeComp) {
+				expNames.add("minimum");
+				expSize++;
+				addMinimum(minIndex, queryResults_min);
+			}
+			
 			// sort
 			ArrayList<ArrayList<QueryResult>> queryResults_sort = sortQueryResults(queryResults_min);
 
@@ -725,8 +769,14 @@ public class ExperimentServer extends NanoHTTPD {
 					"    queryArr"+i+" = [],\n" + 
 					"    timesArr"+i+" = [],\n" + 
 					"    expNames"+i+" = [];\n" +
-					"    var colors = allColors.slice(0,expSize);\n" +
-					"    colors[(expSize-1)] = '#000000';\n");
+					"    var colors = allColors.slice(0,expSize);\n"
+					);
+			if(!timeComp) {
+				plotString.append(
+					"    colors[(expSize-1)] = '#000000';\n"
+				);
+			}
+			
 			for(int k=0; k<expSize; k++) {
 				ArrayList<String> queryNames = new ArrayList<String>();
 				ArrayList<Double> queryTimes = new ArrayList<Double>();
@@ -787,7 +837,6 @@ public class ExperimentServer extends NanoHTTPD {
 			plotString.append(
 			"  Plotly.newPlot('myDiv"+i+"', traces, layout);\n" +
 			"  myPlot"+i+" = document.getElementById('myDiv"+i+"');\n"
-//			"  refresh"+i+"();\n"
 			);
 
 			// event legendclick
