@@ -646,6 +646,7 @@ public class ExperimentServer extends NanoHTTPD {
 		StringBuilder plotString = new StringBuilder();
 		int i=0;
 		boolean timeComp = false;
+		boolean minComp = false;
 		for (final String ontologieName : ontologiesList) {
 			
 			// contains all sorted results with name of queries and times
@@ -658,6 +659,7 @@ public class ExperimentServer extends NanoHTTPD {
 					continue;
 				}
 				timeComp = fileNameSplit[2].contains("_Times");
+				minComp = minComp || timeComp;
 				
 				ArrayList<QueryResult> queryResult_all = new ArrayList<QueryResult>();
 				ArrayList<QueryResult> queryResult_all_satSolver = new ArrayList<QueryResult>();
@@ -745,7 +747,7 @@ public class ExperimentServer extends NanoHTTPD {
 			int minIndex = queryResults_all.stream().min(Comparator.comparing(list -> list.size())).get().size();
 			ArrayList<ArrayList<QueryResult>> queryResults_min = minimizeQueryResults(queryResults_all, minIndex);
 			
-			if(!timeComp) {
+			if(!minComp) {
 				expNames.add("minimum");
 				expSize++;
 				addMinimum(minIndex, queryResults_min);
